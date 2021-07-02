@@ -1,9 +1,12 @@
 library(tidyverse)
 library(rlist)
+library(readxl)
 
 setwd("C:/Users/towse/R/canvas_quiz/pieces_of_code")
 
-title = 'my first mc xml chunk'
+question_bank = read_xlsx('my_mc_only_fake_quiz.xlsx')
+
+title = 'my 10 mc questions xml chunk'
 time_limit = 'unlimited'
 max_attempts = 'unlimited'
 
@@ -22,12 +25,19 @@ beginning_xml_chunk = paste('<?xml version="1.0" encoding="UTF-8"?>
     </qtimetadata>
     <section ident="root_section">')
 
-num_ans_choices = 4
-points = '1.5'
-question = 'The answer should be C.'
-ans_choices_list = list('A', 'B', 'C', 'D')
-corr_ans = 'C'
-corr_ans_index = match(corr_ans, ans_choices_list)
+
+mc_xml_chunk = ''
+for (i in 1:nrow(question_bank)) {
+  question_options = question_bank$question_options[i] %>% 
+    str_replace_all(';', ',')
+  ans_choices_list = as.list(str_split(question_options, ',')[[1]])
+  
+ident = toString(i)
+num_ans_choices = length(ans_choices_list)
+points = question_bank$points[i]
+question = question_bank$question_stem[i]
+corr_ans = question_bank$answer[i]
+corr_ans_index = match(tolower(corr_ans), tolower(ans_choices_list))
 corr_ans_resp = paste('response', corr_ans_index[1]) %>% 
   str_remove_all(' ')
 corr_ans_resp_code = paste(corr_ans_index, corr_ans_index, corr_ans_index, corr_ans_index) %>% 
@@ -59,7 +69,7 @@ for (i in 1:num_ans_choices) {
           </response_lid>')
 }
 
-mc_xml_chunk = paste('<item ident="gb361770297844f3939132eeaabf53cde" title="Question">
+mc_xml_chunk = paste(mc_xml_chunk,'<item ident="', ident,'" title="Question">
         <itemmetadata>
           <qtimetadata>
             <qtimetadatafield>
@@ -96,7 +106,7 @@ mc_xml_chunk = paste('<item ident="gb361770297844f3939132eeaabf53cde" title="Que
           </respcondition>
         </resprocessing>
       </item>')
-
+}
 
 ending_xml_chunk = '    </section>
   </assessment>
@@ -105,4 +115,4 @@ ending_xml_chunk = '    </section>
 
 xml_chunk = paste(beginning_xml_chunk, mc_xml_chunk, ending_xml_chunk) 
 
-write(xml_chunk, file = 'my_first_mc_xml_chunk.xml')
+write(xml_chunk, file = 'my_10_question_mc_xml_chunk.xml')
