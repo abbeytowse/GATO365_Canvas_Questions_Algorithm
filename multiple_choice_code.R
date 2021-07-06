@@ -166,7 +166,7 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
               </conditionvar>
               <setvar action="Set" varname="SCORE">100</setvar>
             </respcondition>')
-        j = j + 2
+        j = j + 2    #move to next set of answers
       }
       question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
         <itemmetadata>
@@ -229,7 +229,7 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
             </conditionvar>
             <setvar action="Set" varname="SCORE">100</setvar>
           </respcondition>')
-        j = j + 1
+        j = j + 1    #move to the next set of answers
       }
       question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
         <itemmetadata>
