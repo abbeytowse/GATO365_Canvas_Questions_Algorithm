@@ -5,9 +5,9 @@ library(readxl)
 
 setwd("C:/Users/towse/R/canvas_quiz/pieces_of_code")    #set directory 
 
-question_bank = read_xlsx('my_mc_and_text_box_fake_quiz.xlsx')    #import spreadsheet with questions 
+question_bank = read_xlsx('my_mc__text_box_numeric_fake_quiz.xlsx')    #import spreadsheet with questions 
 
-title = 'my 10 mc questions with text boxes xml chunk'    #name the quiz 
+title = 'my 10 mc and numeric questions with text boxes xml chunk'    #name the quiz 
 time_limit = 'unlimited'    #set time limit (minutes or 'unlimited') 
 max_attempts = 'unlimited'    #set max attempts (integer or 'unlimited)
 
@@ -34,15 +34,17 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation=
 question_xml_chunk = ''    #create string of questions in xml
 text_box_num = 0    # declare and initiate variable 
 for (i in 1:nrow(question_bank)) {    #iterate through each row of the file 
-  if (question_bank$type_question[i] == 'multiple_choice') {    #if multiple choice
+  
+  ident = question_bank$question_identifier[i]    #get question identifier
+  points = question_bank$points[i]    #get question point value 
+  question = question_bank$question_stem[i]    #get question 
+ 
+   if (question_bank$type_question[i] == 'multiple_choice') {    #if multiple choice
     question_options = question_bank$question_options[i] %>% 
       str_replace_all(';', ',')    #replace ';' with ','
     ans_choices_list = as.list(str_split(question_options, ',')[[1]])    #put into list 
-  
-    ident = question_bank$question_identifier[i]    #get question identifier  
+   
     num_ans_choices = length(ans_choices_list)    #get number of answer choices
-    points = question_bank$points[i]    #get question point value 
-    question = question_bank$question_stem[i]    #get question 
     corr_ans = question_bank$answer[i]    #get the correct answer 
     corr_ans_index = match(tolower(corr_ans), tolower(ans_choices_list))
     corr_ans_resp = paste('response', corr_ans_index[1]) %>% 
@@ -116,7 +118,7 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
   }
   else if (question_bank$type_question[i] == 'text_box') {
     text_box_num = text_box_num + 1    #create unique text box identifier 
-    text = question_bank$question_stem[i]
+    text = question_bank$question_stem[i]    #get text 
     question_xml_chunk = paste(question_xml_chunk, '<item ident="', text_box_num,'" title="Question">
         <itemmetadata>
           <qtimetadata>
@@ -145,6 +147,129 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
         </presentation>
       </item>')
   }
+  else if (question_bank$type_question[i] == 'numeric') {    #numeric question types 
+    if (str_detect(question_bank$answer[i], '\\[') == TRUE) {    #range of values 
+      num_ranges = question_bank$answer[i] %>% 
+        str_count(';') + 1    #determine if there are multiple answers
+      answer_string = question_bank$answer[i] %>% 
+        str_remove_all('\\[') %>% 
+        str_remove_all('\\]') %>% 
+        str_replace_all(';', ',')    #reformat answer 
+      answer_list = as.list(str_split(answer_string, ',')[[1]])    #place answer in list 
+      repeat_numeric_code = ''    #blank string to store repeat section 
+      j = 1
+      for (i in 1:num_ranges) {    #repeat for the number of ranges
+        repeat_numeric_code = paste(repeat_numeric_code, '<respcondition continue="No">
+              <conditionvar>
+                <vargte respident="response1">',answer_list[j + 1],'</vargte>
+                <varlte respident="response1">',answer_list[j],'</varlte>
+              </conditionvar>
+              <setvar action="Set" varname="SCORE">100</setvar>
+            </respcondition>')
+        j = j + 2
+      }
+      question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
+        <itemmetadata>
+          <qtimetadata>
+            <qtimetadatafield>
+              <fieldlabel>question_type</fieldlabel>
+              <fieldentry>numerical_question</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>points_possible</fieldlabel>
+              <fieldentry>',points,'</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>original_answer_ids</fieldlabel>
+              <fieldentry>1588,3549</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>assessment_question_identifierref</fieldlabel>
+              <fieldentry>g5323b39cb52872f8e8bb48952d3b6cf1</fieldentry>
+            </qtimetadatafield>
+          </qtimetadata>
+        </itemmetadata>
+        <presentation>
+          <material>
+            <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;',question,'&amp;nbsp;&lt;/p&gt;&lt;/div&gt;</mattext>
+          </material>
+          <response_str ident="response1" rcardinality="Single">
+            <render_fib fibtype="Decimal">
+              <response_label ident="answer1"/>
+            </render_fib>
+          </response_str>
+        </presentation>
+        <resprocessing>
+          <outcomes>
+            <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+          </outcomes>',repeat_numeric_code,'
+        </resprocessing>
+      </item>')
+    }
+    else {    #numeric with exact answer
+      num_ranges = question_bank$answer[i] %>% 
+        str_count(';') + 1    #determine the number of ranges 
+      answer_string = question_bank$answer[i] %>% 
+        str_replace_all(';', ',')    #reformat answer string
+      answer_list = as.list(str_split(answer_string, ',')[[1]])    #turn answer into list 
+      repeat_numeric_code = ''    #create string to store repeat code 
+      # find how this is formated in the spreadsheet: 
+      margin_of_error = 0
+      j = 1
+      for (i in 1:num_ranges) {
+        repeat_numeric_code = paste(repeat_numeric_code, '<respcondition continue="No">
+            <conditionvar>
+              <or>
+                <varequal respident="response1">',answer_list[j],'</varequal>
+                <and>
+                  <vargte respident="response1">', toString(as.numeric(answer_list[j]) - margin_of_error),'</vargte>
+                  <varlte respident="response1">', toString(as.numeric(answer_list[j]) + margin_of_error),'</varlte>
+                </and>
+              </or>
+            </conditionvar>
+            <setvar action="Set" varname="SCORE">100</setvar>
+          </respcondition>')
+        j = j + 1
+      }
+      question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
+        <itemmetadata>
+          <qtimetadata>
+            <qtimetadatafield>
+              <fieldlabel>question_type</fieldlabel>
+              <fieldentry>numerical_question</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>points_possible</fieldlabel>
+              <fieldentry>',points,'</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>original_answer_ids</fieldlabel>
+              <fieldentry>4256,6031</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>assessment_question_identifierref</fieldlabel>
+              <fieldentry>gbaffeae35dd6407e2901b7f363db9209</fieldentry>
+            </qtimetadatafield>
+          </qtimetadata>
+        </itemmetadata>
+        <presentation>
+          <material>
+            <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;',question,'&amp;nbsp;&lt;/p&gt;&lt;/div&gt;</mattext>
+          </material>
+          <response_str ident="response1" rcardinality="Single">
+            <render_fib fibtype="Decimal">
+              <response_label ident="answer1"/>
+            </render_fib>
+          </response_str>
+        </presentation>
+        <resprocessing>
+          <outcomes>
+            <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+          </outcomes>',repeat_numeric_code,'
+        </resprocessing>
+      </item>')
+    }
+  }
 }
 
 #questions stop 
@@ -159,4 +284,4 @@ ending_xml_chunk = '    </section>
 xml_chunk = paste(beginning_xml_chunk, question_xml_chunk, ending_xml_chunk) 
 
 #write xml file 
-write(xml_chunk, file = 'my_10_question_quiz_with_text_boxes_xml_chunk.xml')
+write(xml_chunk, file = 'my_10_question_mc_and_numeric_quiz_with_text_boxes_xml_chunk.xml')
