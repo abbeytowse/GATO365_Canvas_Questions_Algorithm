@@ -3,13 +3,25 @@ library(tidyverse)
 library(rlist)
 library(readxl)
 
+#user input begins 
+#USER INPUT 
 setwd("C:/Users/towse/R/canvas_quiz/pieces_of_code")    #set directory 
 
+#USER INPUT 
 question_bank = read_xlsx('my_mc__text_box_numeric_fake_quiz.xlsx')    #import spreadsheet with questions 
 
-title = 'my 10 mc and numeric questions with text boxes xml chunk'    #name the quiz 
+#USER INPUT
+title = 'quiz with images'    #name the quiz 
 time_limit = 'unlimited'    #set time limit (minutes or 'unlimited') 
 max_attempts = 'unlimited'    #set max attempts (integer or 'unlimited)
+
+#USER INPUT 
+#if no images input 'no_images'
+image_name_list = list('flower_image.jpg', 'sunflower.jpg')    #list the images to use in the quiz
+location_num_list = list('item_1', 'item_4')    #list the location of each image 
+
+num_of_images = length(image_name_list)    #get the num of images in the file 
+#user input ends 
 
 #beginning part of xml file, before questions 
 beginning_xml_chunk = paste('<?xml version="1.0" encoding="UTF-8"?>
@@ -38,6 +50,15 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
   ident = question_bank$question_identifier[i]    #get question identifier
   points = question_bank$points[i]    #get question point value 
   question = question_bank$question_stem[i]    #get question 
+  
+  image_string = ''    #create blank string for default image name 
+  if (str_detect(location_num_list[1], toString(i)))    #if this question has an image 
+  {
+    image_name = image_name_list[1]    #get image name 
+    image_string = paste('&amp;nbsp;&lt;/p&gt;&lt;p&gt;&lt;img src="$IMS-CC-FILEBASE$/Uploaded%20Media/',image_name,'" alt="',image_name,'"&gt;&amp;nbsp;')
+    image_name_list = image_name_list[-1]    #remove image name from list 
+    location_num_list = location_num_list[-1]    #remove item num from list 
+  }
  
    if (question_bank$type_question[i] == 'multiple_choice') {    #if multiple choice
     question_options = question_bank$question_options[i] %>% 
@@ -62,7 +83,7 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
       ans_choices_codes_list = list.append(ans_choices_codes_list, four_digit_code)    #make codes list 
     }
     ans_choices_codes = str_remove_all(ans_choices_codes, ' ')    #remove spaces from string 
-
+    
     repeat_mc_code = ''   #create string to store the answer choices xml code 
     for (i in 1:num_ans_choices) {
       resp_val = paste('response', i) %>% 
@@ -101,7 +122,7 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
             </itemmetadata>
             <presentation>
               <material>
-                <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;', question, '&lt;/p&gt;&lt;/div&gt;</mattext>
+                <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;', question, image_string,'&lt;/p&gt;&lt;/div&gt;</mattext>
               </material>', repeat_mc_code,'</presentation>
             <resprocessing>
               <outcomes>
@@ -142,7 +163,7 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
         </itemmetadata>
         <presentation>
           <material>
-            <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;', text,'&lt;/p&gt;&lt;/div&gt;</mattext>
+            <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;', text, image_string,'&lt;/p&gt;&lt;/div&gt;</mattext>
           </material>
         </presentation>
       </item>')
@@ -191,7 +212,7 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
         </itemmetadata>
         <presentation>
           <material>
-            <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;',question,'&amp;nbsp;&lt;/p&gt;&lt;/div&gt;</mattext>
+            <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;',question, image_string,'&amp;nbsp;&lt;/p&gt;&lt;/div&gt;</mattext>
           </material>
           <response_str ident="response1" rcardinality="Single">
             <render_fib fibtype="Decimal">
@@ -254,7 +275,7 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
         </itemmetadata>
         <presentation>
           <material>
-            <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;',question,'&amp;nbsp;&lt;/p&gt;&lt;/div&gt;</mattext>
+            <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;',question, image_string,'&amp;nbsp;&lt;/p&gt;&lt;/div&gt;</mattext>
           </material>
           <response_str ident="response1" rcardinality="Single">
             <render_fib fibtype="Decimal">
@@ -284,4 +305,4 @@ ending_xml_chunk = '    </section>
 xml_chunk = paste(beginning_xml_chunk, question_xml_chunk, ending_xml_chunk) 
 
 #write xml file 
-write(xml_chunk, file = 'my_10_question_mc_and_numeric_quiz_with_text_boxes_xml_chunk.xml')
+write(xml_chunk, file = 'quiz_with_images.xml')
