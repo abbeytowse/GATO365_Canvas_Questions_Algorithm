@@ -8,19 +8,20 @@ library(readxl)
 setwd("C:/Users/towse/R/canvas_quiz/pieces_of_code")    #set directory 
 
 #USER INPUT 
-question_bank = read_xlsx('my_mc__text_box_numeric_fake_quiz.xlsx')    #import spreadsheet with questions 
+question_bank = read_xlsx('mc_text_box_numeric_open_ended.xlsx')    #import spreadsheet with questions 
 
 #USER INPUT
-title = 'quiz with images'    #name the quiz 
+title = 'MC, Textbox, Numeric, and Open Ended Quiz'    #name the quiz 
 time_limit = 'unlimited'    #set time limit (minutes or 'unlimited') 
-max_attempts = 'unlimited'    #set max attempts (integer or 'unlimited)
+max_attempts = 'unlimited'    #set max attempts (integer or 'unlimited')
 
-#USER INPUT 
+#USER INPUT - minutes code currently is not functional
 #if no images input 'no_images'
-image_name_list = list('flower_image.jpg', 'sunflower.jpg')    #list the images to use in the quiz
-location_num_list = list('item_1', 'item_4')    #list the location of each image 
+#image_name_list = list('mySquirrelImage.jpg')    #list the images to use in the quiz
+#location_num_list = list('item_1', 'item_4')    #list the location of each image 
 
-num_of_images = length(image_name_list)    #get the num of images in the file 
+#num_of_images = length(image_name_list)    #get the num of images in the file 
+
 #user input ends 
 
 #beginning part of xml file, before questions 
@@ -51,16 +52,16 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
   points = question_bank$points[i]    #get question point value 
   question = question_bank$question_stem[i]    #get question 
   
-  image_string = ''    #create blank string for default image name 
-  if (str_detect(location_num_list[1], toString(i)))    #if this question has an image 
-  {
-    image_name = image_name_list[1]    #get image name 
-    image_string = paste('&amp;nbsp;&lt;/p&gt;&lt;p&gt;&lt;img src="$IMS-CC-FILEBASE$/Uploaded%20Media/',image_name,'" alt="',image_name,'"&gt;&amp;nbsp;')
-    image_name_list = image_name_list[-1]    #remove image name from list 
-    location_num_list = location_num_list[-1]    #remove item num from list 
-  }
+  image_string = ''    #create blank string for default image name/no image 
+  #if (str_detect(location_num_list[1], toString(i)))    #if this question has an image 
+  #{
+    #image_name = image_name_list[1]    #get image name 
+    #image_string = paste('&amp;nbsp;&lt;/p&gt;&lt;p&gt;&lt;img src="$IMS-CC-FILEBASE$/Uploaded%20Media/',image_name,'" alt="',image_name,'"&gt;&amp;nbsp;')
+    #image_name_list = image_name_list[-1]     #remove image name from list 
+    #location_num_list = location_num_list[-1]    #remove item num from list 
+  #}
  
-   if (question_bank$type_question[i] == 'multiple_choice') {    #if multiple choice
+  if (question_bank$type_question[i] == 'multiple_choice') {    #if multiple choice
     question_options = question_bank$question_options[i] %>% 
       str_replace_all(';', ',')    #replace ';' with ','
     ans_choices_list = as.list(str_split(question_options, ',')[[1]])    #put into list 
@@ -291,6 +292,54 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
       </item>')
     }
   }
+  else if (question_bank$type_question[i] == 'open_ended')
+  {
+    ident = question_bank$question_identifier[i]
+    points = question_bank$points[i]
+    question = question_bank$question_stem[i]
+    question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
+        <itemmetadata>
+          <qtimetadata>
+            <qtimetadatafield>
+              <fieldlabel>question_type</fieldlabel>
+              <fieldentry>essay_question</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>points_possible</fieldlabel>
+              <fieldentry>',points,'</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>original_answer_ids</fieldlabel>
+              <fieldentry></fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>assessment_question_identifierref</fieldlabel>
+              <fieldentry>gb87d4651e63409338eb1a6e61f8fde8f</fieldentry>
+            </qtimetadatafield>
+          </qtimetadata>
+        </itemmetadata>
+        <presentation>
+          <material>
+            <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;',question,'&amp;nbsp;&lt;/p&gt;&lt;/div&gt;</mattext>
+          </material>
+          <response_str ident="response1" rcardinality="Single">
+            <render_fib>
+              <response_label ident="answer1" rshuffle="No"/>
+            </render_fib>
+          </response_str>
+        </presentation>
+        <resprocessing>
+          <outcomes>
+            <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+          </outcomes>
+          <respcondition continue="No">
+            <conditionvar>
+              <other/>
+            </conditionvar>
+          </respcondition>
+        </resprocessing>
+      </item>')
+  }
 }
 
 #questions stop 
@@ -305,4 +354,5 @@ ending_xml_chunk = '    </section>
 xml_chunk = paste(beginning_xml_chunk, question_xml_chunk, ending_xml_chunk) 
 
 #write xml file 
-write(xml_chunk, file = 'quiz_with_images.xml')
+#USER INPUT
+write(xml_chunk, file = 'a quiz that includes open ended questions.xml')
