@@ -23,8 +23,13 @@
 #### - Numeric (Range and Exact Answer) 
 #### - Open Ended 
 #### - Text Boxes 
+### Ident Variable: 
+#### Each question/text box needs a UNIQUE identification number. If two ident numbers are the same, both questions won't be in the quiz, only one.
+#### The ident variable can be any length (single to infinite digits). 
+#### Currently, textboxes autogenerate ident numbers (1, 2, 3, 4, 5...) for each box that appears. Ensure that ident numbers for other entities are greater than the textbox count. 
 ### Text Boxes: 
-#### Current this code can not change the font size or bold the font. 
+#### Currently this code can not change the font size or bold the font. 
+#### Textboxes do not need an identification number on the spreadsheet. 
 ### Images: 
 #### Currently this code cannot upload/add images to quiz questions. 
 ### imsmanifest.xml :
