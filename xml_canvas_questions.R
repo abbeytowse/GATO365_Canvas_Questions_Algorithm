@@ -8,10 +8,10 @@ library(readxl)
 setwd("C:/Users/towse/R/canvas_quiz/pieces_of_code")    #set directory 
 
 #USER INPUT 
-question_bank = read_xlsx('mc_text_box_numeric_open_ended.xlsx')    #import spreadsheet with questions 
+question_bank = read_xlsx('mc_text_box_numeric_open_ended_matching.xlsx')    #import spreadsheet with questions 
 
 #USER INPUT
-title = 'MC, Textbox, Numeric, and Open Ended Quiz'    #name the quiz 
+title = 'MC, Textbox, Numeric, Open Ended Quiz, and Matching'    #name the quiz 
 time_limit = 'unlimited'    #set time limit (minutes or 'unlimited') 
 max_attempts = 'unlimited'    #set max attempts (integer or 'unlimited')
 
@@ -62,9 +62,8 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
   #}
  
   if (question_bank$type_question[i] == 'multiple_choice') {    #if multiple choice
-    question_options = question_bank$question_options[i] %>% 
-      str_replace_all(';', ',')    #replace ';' with ','
-    ans_choices_list = as.list(str_split(question_options, ',')[[1]])    #put into list 
+    question_options = question_bank$question_options[i]
+    ans_choices_list = as.list(str_split(question_options, ';')[[1]])    #put into list 
    
     num_ans_choices = length(ans_choices_list)    #get number of answer choices
     corr_ans = question_bank$answer[i]    #get the correct answer 
@@ -74,16 +73,16 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
     corr_ans_resp_code = paste(corr_ans_index, corr_ans_index, corr_ans_index, corr_ans_index) %>% 
       str_remove_all(' ')    #create code to correspond with correct answer choice
 
-    ans_choices_codes = ''   #create string to store codes 
-    ans_choices_codes_list = list()   #create empty list to store codes 
+    mc_ans_choices_codes = ''   #create string to store codes 
+    mc_ans_choices_codes_list = list()   #create empty list to store codes 
     for (i in 1:num_ans_choices){
       num = toString(i)
       four_digit_code = paste(num, num, num, num) %>% 
         str_remove_all(' ')    #create unique code for each answer choice
-      ans_choices_codes = paste(ans_choices_codes, four_digit_code, ',')    #make codes string 
-      ans_choices_codes_list = list.append(ans_choices_codes_list, four_digit_code)    #make codes list 
+      mc_ans_choices_codes = paste(mc_ans_choices_codes, four_digit_code, ',')    #make codes string 
+      mc_ans_choices_codes_list = list.append(mc_ans_choices_codes_list, four_digit_code)    #make codes list 
     }
-    ans_choices_codes = str_remove_all(ans_choices_codes, ' ')    #remove spaces from string 
+    mc_ans_choices_codes = str_remove_all(mc_ans_choices_codes, ' ')    #remove spaces from string 
     
     repeat_mc_code = ''   #create string to store the answer choices xml code 
     for (i in 1:num_ans_choices) {
@@ -91,7 +90,7 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
         str_remove_all(' ')    #create response number 
       repeat_mc_code = paste(repeat_mc_code, '<response_lid ident="',resp_val, '" rcardinality="Single">
                 <render_choice>
-                  <response_label ident="',ans_choices_codes_list[i],'">
+                  <response_label ident="',mc_ans_choices_codes_list[i],'">
                     <material>
                       <mattext texttype="text/plain">',ans_choices_list[i],'</mattext>
                     </material>
@@ -113,7 +112,7 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
                 </qtimetadatafield>
                 <qtimetadatafield>
                   <fieldlabel>original_answer_ids</fieldlabel>
-                  <fieldentry>', ans_choices_codes, '</fieldentry>
+                  <fieldentry>', mc_ans_choices_codes, '</fieldentry>
                 </qtimetadatafield>
                 <qtimetadatafield>
                   <fieldlabel>assessment_question_identifierref</fieldlabel>
@@ -292,11 +291,7 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
       </item>')
     }
   }
-  else if (question_bank$type_question[i] == 'open_ended')
-  {
-    ident = question_bank$question_identifier[i]
-    points = question_bank$points[i]
-    question = question_bank$question_stem[i]
+  else if (question_bank$type_question[i] == 'open_ended') {
     question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
         <itemmetadata>
           <qtimetadata>
@@ -340,6 +335,120 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
         </resprocessing>
       </item>')
   }
+  else if (question_bank$type_question[i] == 'matching') {
+    question_options = paste('', question_bank$question_options[i])
+    ans_choices_list = as.list(str_split(question_options, ';')[[1]])    #put into list 
+    num_of_choices = length(ans_choices_list)
+    
+    matches = question_bank$answer[i]
+    matches_list = as.list(str_split(matches, ';')[[1]])
+    num_of_matches = length(matches_list)
+    
+    matching_part_1_codes = '' 
+    matching_part_1_codes_list = list()
+    for (i in 1:num_of_matches) { 
+      num = toString(i)
+      four_digit_code = paste(num, num, num, num) %>% 
+        str_remove_all(' ')    #create unique code for each answer choice
+      matching_part_1_codes = paste(matching_part_1_codes, four_digit_code, ',')    #make codes string 
+      matching_part_1_codes_list = list.append(matching_part_1_codes_list, four_digit_code)    #make codes list 
+    }
+    
+    matching_ans_choices_codes_list = list()
+    for (i in 1:num_of_choices) {
+      num = toString(i)
+      five_digit_code = paste(num, num, num, num, num) %>% 
+        str_remove_all(' ')
+      matching_ans_choices_codes_list = list.append(matching_ans_choices_codes_list, five_digit_code)
+    }
+    
+    matching_part_1_list = list()
+    matching_part_2_list = list()
+    for (i in 1:num_of_matches) {
+      part_1 = gsub('-.*', '', matches_list[i]) %>% 
+        str_remove_all(' ')
+      matching_part_1_list = list.append(matching_part_1_list, part_1)
+      part_2 = gsub('.*-', '', matches_list[i])
+      matching_part_2_list = list.append(matching_part_2_list, part_2)
+    }
+    
+    inner_repeat_matching_code = ''
+    for (i in 1:num_of_choices) { 
+      resp_ident =  matching_ans_choices_codes_list[i]
+      ans_choice = ans_choices_list[i] 
+      inner_repeat_matching_code = paste(inner_repeat_matching_code, '<response_label ident="',resp_ident,'">
+                <material>
+                  <mattext>',ans_choice,'</mattext>
+                </material>
+              </response_label>')
+    }
+    
+    repeat_options_matching_code = ''
+    resp_val_list = list()
+    for (i in 1:num_of_matches) {
+      resp_val = paste('response_', matching_part_1_codes_list[i]) %>% 
+        str_remove_all(' ')    #create response number 
+      resp_val_list = list.append(resp_val_list, resp_val)
+    }
+    
+    for (i in 1:num_of_matches) {
+    repeat_options_matching_code = paste(repeat_options_matching_code, '<response_lid ident="',resp_val_list[i],'">
+            <material>
+              <mattext texttype="text/plain">',matching_part_1_list[i],'</mattext>
+            </material>
+            <render_choice>
+            ',inner_repeat_matching_code,'
+            </render_choice>
+          </response_lid>')
+    }
+    
+    repeat_correct_matches_code = ''
+    for (i in 1:num_of_matches) {
+      code_index = match(tolower(matching_part_2_list[i]), tolower(ans_choices_list))  
+      part_2_code = matching_ans_choices_codes_list[code_index] 
+      repeat_correct_matches_code = paste(repeat_correct_matches_code, '<respcondition>
+            <conditionvar>
+              <varequal respident="',resp_val_list[i],'">',part_2_code,'</varequal>
+            </conditionvar>
+            <setvar varname="SCORE" action="Add">25.00</setvar>
+          </respcondition>')
+    }
+    
+    question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
+        <itemmetadata>
+          <qtimetadata>
+            <qtimetadatafield>
+              <fieldlabel>question_type</fieldlabel>
+              <fieldentry>matching_question</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>points_possible</fieldlabel>
+              <fieldentry>',points,'</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>original_answer_ids</fieldlabel>
+              <fieldentry>',matching_part_1_codes,'</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>assessment_question_identifierref</fieldlabel>
+              <fieldentry>g9e2583dcc067eeca9a05065914a829f6</fieldentry>
+            </qtimetadatafield>
+          </qtimetadata>
+        </itemmetadata>
+        <presentation>
+          <material>
+            <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;',question,'&lt;/p&gt;&lt;/div&gt;</mattext>
+          </material>
+          ',repeat_options_matching_code,'
+        </presentation>
+        <resprocessing>
+          <outcomes>
+            <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+          </outcomes>
+          ',repeat_correct_matches_code,'
+        </resprocessing>
+      </item>')
+  }
 }
 
 #questions stop 
@@ -355,4 +464,4 @@ xml_chunk = paste(beginning_xml_chunk, question_xml_chunk, ending_xml_chunk)
 
 #write xml file 
 #USER INPUT
-write(xml_chunk, file = 'a quiz that includes open ended questions.xml')
+write(xml_chunk, file = 'a quiz that includes matching questions.xml')
