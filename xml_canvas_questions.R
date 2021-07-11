@@ -8,10 +8,10 @@ library(readxl)
 setwd("C:/Users/towse/R/canvas_quiz/pieces_of_code")    #set directory 
 
 #USER INPUT 
-question_bank = read_xlsx('mc_text_box_numeric_open_ended_matching.xlsx')    #import spreadsheet with questions 
+question_bank = read_xlsx('mc_text_box_numeric_open_ended_matching_file_upload.xlsx')    #import spreadsheet with questions 
 
 #USER INPUT
-title = 'MC, Textbox, Numeric, Open Ended Quiz, and Matching'    #name the quiz 
+title = 'MC, Textbox, Numeric, Open Ended Quiz, Matching, and File Upload'    #name the quiz 
 time_limit = 'unlimited'    #set time limit (minutes or 'unlimited') 
 max_attempts = 'unlimited'    #set max attempts (integer or 'unlimited')
 
@@ -449,6 +449,40 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
         </resprocessing>
       </item>')
   }
+  else if (question_bank$type_question[i] == 'file_upload') {
+    question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
+        <itemmetadata>
+          <qtimetadata>
+            <qtimetadatafield>
+              <fieldlabel>question_type</fieldlabel>
+              <fieldentry>file_upload_question</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>points_possible</fieldlabel>
+              <fieldentry>',points,'</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>original_answer_ids</fieldlabel>
+              <fieldentry></fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>assessment_question_identifierref</fieldlabel>
+              <fieldentry>geb62e5d9e6507b736be3933f340e55a5</fieldentry>
+            </qtimetadatafield>
+          </qtimetadata>
+        </itemmetadata>
+        <presentation>
+          <material>
+            <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;',question,'&lt;/p&gt;&lt;/div&gt;</mattext>
+          </material>
+        </presentation>
+        <resprocessing>
+          <outcomes>
+            <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+          </outcomes>
+        </resprocessing>
+      </item>')
+  }
 }
 
 #questions stop 
@@ -464,4 +498,4 @@ xml_chunk = paste(beginning_xml_chunk, question_xml_chunk, ending_xml_chunk)
 
 #write xml file 
 #USER INPUT
-write(xml_chunk, file = 'a quiz that includes matching questions.xml')
+write(xml_chunk, file = 'we have added file upload.xml')
