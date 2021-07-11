@@ -32,10 +32,13 @@
 #### - Matching (matching)
 ##### Spreadsheet format answer choices: match option A; match option B; match option C; etc. 
 ##### Spreadsheet format answer: explantory variable - match option B; response varaible - match option A; etc. 
+#### - File Upload (file_upload)
+##### Spreadsheet format: only need to fill out question_stem, identification, and points. 
 ### Ident Variable: 
 #### Each question/text box needs a UNIQUE identification number. If two ident numbers are the same, both questions won't be in the quiz, only one.
 #### The ident variable can be any length (single to infinite digits). 
 #### Currently, textboxes autogenerate ident numbers (1, 2, 3, 4, 5...) for each box that appears. Ensure that ident numbers for other entities are greater than the textbox count. 
+#### Using idents of the same number of four digits long or five digits long will conflict with other aspects of the code (ie 1111 or 77777)
 ### Text Boxes: 
 #### Currently this code can not change the font size or bold the font. 
 #### Textboxes do not need an identification number on the spreadsheet. 
