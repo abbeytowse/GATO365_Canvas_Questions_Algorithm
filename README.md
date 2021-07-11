@@ -20,9 +20,18 @@
 ## Additional Notes:
 ### Question Types Available: 
 #### - Multiple Choice 
+##### Spreadsheet format answer choices: answer choice A; answer choice B; answer choice C; etc. 
 #### - Numeric (Range and Exact Answer) 
+##### Spreadsheet format Range answer: [1, 2] 
+###### If you want multiple ranges to be acceptable: [1, 2]; [-1, -2]; etc. 
+##### Spreadsheet format Exact Answer answer: 2
+###### If you want multiple exact answers to be acceptable: 2; 1; etc. 
 #### - Open Ended 
 #### - Text Boxes 
+##### Spreadsheet format: put textbox words in the question_stem column. Only need to fill out question type (textbox) and question stem. 
+#### - Matching 
+##### Spreadsheet format answer choices: match option A; match option B; match option C; etc. 
+##### Spreadsheet format answer: explantory variable - match option B; response varaible - match option A; etc. 
 ### Ident Variable: 
 #### Each question/text box needs a UNIQUE identification number. If two ident numbers are the same, both questions won't be in the quiz, only one.
 #### The ident variable can be any length (single to infinite digits). 
