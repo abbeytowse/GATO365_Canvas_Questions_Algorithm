@@ -8,10 +8,10 @@ library(readxl)
 setwd("C:/Users/towse/R/canvas_quiz/pieces_of_code")    #set directory 
 
 #USER INPUT 
-question_bank = read_xlsx('mc_text_box_numeric_open_ended_matching_file_upload.xlsx')    #import spreadsheet with questions 
+question_bank = read_xlsx('mc_text_box_numeric_open_ended_matching_file_upload_select_all.xlsx')    #import spreadsheet with questions 
 
 #USER INPUT
-title = 'MC, Textbox, Numeric, Open Ended Quiz, Matching, and File Upload'    #name the quiz 
+title = 'MC, Textbox, Numeric, Open Ended Quiz, Matching, File Upload, and Select All'    #name the quiz 
 time_limit = 'unlimited'    #set time limit (minutes or 'unlimited') 
 max_attempts = 'unlimited'    #set max attempts (integer or 'unlimited')
 
@@ -55,16 +55,16 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
   image_string = ''    #create blank string for default image name/no image 
   #if (str_detect(location_num_list[1], toString(i)))    #if this question has an image 
   #{
-    #image_name = image_name_list[1]    #get image name 
-    #image_string = paste('&amp;nbsp;&lt;/p&gt;&lt;p&gt;&lt;img src="$IMS-CC-FILEBASE$/Uploaded%20Media/',image_name,'" alt="',image_name,'"&gt;&amp;nbsp;')
-    #image_name_list = image_name_list[-1]     #remove image name from list 
-    #location_num_list = location_num_list[-1]    #remove item num from list 
+  #image_name = image_name_list[1]    #get image name 
+  #image_string = paste('&amp;nbsp;&lt;/p&gt;&lt;p&gt;&lt;img src="$IMS-CC-FILEBASE$/Uploaded%20Media/',image_name,'" alt="',image_name,'"&gt;&amp;nbsp;')
+  #image_name_list = image_name_list[-1]     #remove image name from list 
+  #location_num_list = location_num_list[-1]    #remove item num from list 
   #}
- 
+  
   if (question_bank$type_question[i] == 'multiple_choice') {    #if multiple choice
     question_options = question_bank$question_options[i]
     ans_choices_list = as.list(str_split(question_options, ';')[[1]])    #put into list 
-   
+    
     num_ans_choices = length(ans_choices_list)    #get number of answer choices
     corr_ans = question_bank$answer[i]    #get the correct answer 
     corr_ans_index = match(tolower(corr_ans), tolower(ans_choices_list))
@@ -72,7 +72,7 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
       str_remove_all(' ')    #determine what answer choice option is correct 
     corr_ans_resp_code = paste(corr_ans_index, corr_ans_index, corr_ans_index, corr_ans_index) %>% 
       str_remove_all(' ')    #create code to correspond with correct answer choice
-
+    
     mc_ans_choices_codes = ''   #create string to store codes 
     mc_ans_choices_codes_list = list()   #create empty list to store codes 
     for (i in 1:num_ans_choices){
@@ -98,7 +98,7 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
                 </render_choice>
               </response_lid>')
     }
-
+    
     question_xml_chunk = paste(question_xml_chunk,'<item ident="', ident,'" title="Question">
             <itemmetadata>
               <qtimetadata>
@@ -391,7 +391,7 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
     
     repeat_options_matching_code = ''    #create blank string to store repeating section in 
     for (i in 1:num_of_matches) {
-    repeat_options_matching_code = paste(repeat_options_matching_code, '<response_lid ident="',resp_val_list[i],'">
+      repeat_options_matching_code = paste(repeat_options_matching_code, '<response_lid ident="',resp_val_list[i],'">
             <material>
               <mattext texttype="text/plain">',matching_part_1_list[i],'</mattext>
             </material>
@@ -483,6 +483,110 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
         </resprocessing>
       </item>')
   }
+  else if (question_bank$type_question[i] == 'select_all') {
+    select_all_ans_options = question_bank$question_options[i]
+    ans_choices_list = as.list(str_split(select_all_ans_options, ';')[[1]])    #put into list 
+    num_ans_choices = length(ans_choices_list)    #get number of answer choices
+    
+    answers = question_bank$answer[i]
+    answers_list = as.list(str_split(answers, ';')[[1]])
+    num_corr_answers = length(answers_list)
+    
+    corr_ans_index_list = list()
+    for (i in 1:num_corr_answers) {
+      corr_answer = answers_list[i]
+      corr_ans_index = match(tolower(corr_answer), tolower(ans_choices_list))
+      corr_ans_index_list = list.append(index_list, corr_ans_index)
+    }
+    
+    select_all_ans_choices_codes = ''   #create string to store codes 
+    select_all_ans_choices_codes_list = list()   #create empty list to store codes 
+    for (i in 1:num_ans_choices){ 
+      num = toString(i)
+      four_digit_code = paste(num, num, num, num) %>% 
+        str_remove_all(' ')    #create unique code for each answer choice
+      select_all_ans_choices_codes = paste(select_all_ans_choices_codes, four_digit_code, ',')    #make codes string 
+      select_all_ans_choices_codes_list = list.append(select_all_ans_choices_codes_list, four_digit_code)    #make codes list 
+    }
+    select_all_ans_choices_codes = str_remove_all(select_all_ans_choices_codes, ' ')    #remove spaces from string 
+    
+    corr_ans_codes_list = list()
+    for (i in 1:num_corr_answers) {
+      index = as.numeric(corr_ans_index_list[i])
+      code = as.numeric(select_all_ans_choices_codes_list[index])
+      corr_ans_codes_list = list.append(corr_ans_codes_list, code)
+    }
+    
+    select_all_repeat_code = ''
+    for (i in 1:num_ans_choices) { 
+      ans_choice_code = toString(select_all_ans_choices_codes_list[i])
+      ans_choice = toString(ans_choices_list[i])
+      select_all_repeat_code = paste(select_all_repeat_code, '<response_label ident="',ans_choice_code,'">
+                <material>
+                  <mattext texttype="text/plain">',ans_choice,'</mattext>
+                </material>
+              </response_label>')
+    }
+    
+    #if code in correct list matches code in code list it is a yes, if not it is a no 
+    correct_ans_chunk = ''
+    for (i in 1: num_ans_choices) {
+      ans_code = toString(select_all_ans_choices_codes_list[i])
+      if (is.element(select_all_ans_choices_codes_list[i], corr_ans_codes_list)) {
+        correct_ans_chunk = paste(correct_ans_chunk, '<varequal respident="response1">',ans_code,'</varequal>')
+      }
+      else {
+        correct_ans_chunk = paste(correct_ans_chunk, '<not>
+                  <varequal respident="response1">',ans_code,'</varequal>
+                </not>')
+      }
+    }
+    question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
+        <itemmetadata>
+          <qtimetadata>
+            <qtimetadatafield>
+              <fieldlabel>question_type</fieldlabel>
+              <fieldentry>multiple_answers_question</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>points_possible</fieldlabel>
+              <fieldentry>',points,'</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>original_answer_ids</fieldlabel>
+              <fieldentry>',select_all_ans_choices_codes,'</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>assessment_question_identifierref</fieldlabel>
+              <fieldentry>g3402a0510e1a8ec02312a3128ffbd635</fieldentry>
+            </qtimetadatafield>
+          </qtimetadata>
+        </itemmetadata>
+        <presentation>
+          <material>
+            <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;',question,'&lt;/p&gt;&lt;/div&gt;</mattext>
+          </material>
+          <response_lid ident="response1" rcardinality="Multiple">
+            <render_choice>
+              ',select_all_repeat_code,'
+            </render_choice>
+          </response_lid>
+        </presentation>
+        <resprocessing>
+          <outcomes>
+            <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+          </outcomes>
+          <respcondition continue="No">
+            <conditionvar>
+              <and>
+                ',correct_ans_chunk,'
+              </and>
+            </conditionvar>
+            <setvar action="Set" varname="SCORE">100</setvar>
+          </respcondition>
+        </resprocessing>
+      </item>')
+  }
 }
 
 #questions stop 
@@ -498,4 +602,4 @@ xml_chunk = paste(beginning_xml_chunk, question_xml_chunk, ending_xml_chunk)
 
 #write xml file 
 #USER INPUT
-write(xml_chunk, file = 'we have added file upload.xml')
+write(xml_chunk, file = 'I added select all that apply.xml')
