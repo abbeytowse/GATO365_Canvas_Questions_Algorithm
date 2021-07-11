@@ -34,6 +34,9 @@
 ##### Spreadsheet format answer: explantory variable - match option B; response varaible - match option A; etc. 
 #### - File Upload (file_upload)
 ##### Spreadsheet format: only need to fill out question_stem, identification, and points. 
+#### - Select All That Apply (select_all)
+##### Spreadsheet format answer choices: answer choice A; answer choice B; answer choice C; etc. 
+##### Spreadsheet format answer: answer choice A; answer choice C; etc. 
 ### Ident Variable: 
 #### Each question/text box needs a UNIQUE identification number. If two ident numbers are the same, both questions won't be in the quiz, only one.
 #### The ident variable can be any length (single to infinite digits). 
