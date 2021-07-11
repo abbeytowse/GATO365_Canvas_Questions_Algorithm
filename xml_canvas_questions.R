@@ -336,61 +336,60 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
       </item>')
   }
   else if (question_bank$type_question[i] == 'matching') {
-    question_options = paste('', question_bank$question_options[i])
+    question_options = paste('', question_bank$question_options[i])    #add space in front for match() purposes
     ans_choices_list = as.list(str_split(question_options, ';')[[1]])    #put into list 
-    num_of_choices = length(ans_choices_list)
+    num_of_choices = length(ans_choices_list)    #get the num of answer choices
     
-    matches = question_bank$answer[i]
-    matches_list = as.list(str_split(matches, ';')[[1]])
-    num_of_matches = length(matches_list)
+    matches = question_bank$answer[i]    #get the match combinations 
+    matches_list = as.list(str_split(matches, ';')[[1]])    #transform into list 
+    num_of_matches = length(matches_list)    #get number of matches the student needs to make 
     
-    matching_part_1_codes = '' 
-    matching_part_1_codes_list = list()
+    matching_part_1_codes = ''     #create blank string to store codes in 
+    matching_part_1_codes_list = list()    #create blank list to store codes in 
     for (i in 1:num_of_matches) { 
       num = toString(i)
       four_digit_code = paste(num, num, num, num) %>% 
-        str_remove_all(' ')    #create unique code for each answer choice
+        str_remove_all(' ')    #create unique code for each match
       matching_part_1_codes = paste(matching_part_1_codes, four_digit_code, ',')    #make codes string 
       matching_part_1_codes_list = list.append(matching_part_1_codes_list, four_digit_code)    #make codes list 
     }
     
-    matching_ans_choices_codes_list = list()
+    matching_ans_choices_codes_list = list()    #create blank list to store codes in 
     for (i in 1:num_of_choices) {
       num = toString(i)
       five_digit_code = paste(num, num, num, num, num) %>% 
-        str_remove_all(' ')
-      matching_ans_choices_codes_list = list.append(matching_ans_choices_codes_list, five_digit_code)
+        str_remove_all(' ')    #create unique code for each answer choice 
+      matching_ans_choices_codes_list = list.append(matching_ans_choices_codes_list, five_digit_code)    #make codes list
     }
     
-    matching_part_1_list = list()
-    matching_part_2_list = list()
+    matching_part_1_list = list()    #create blank list to store first half of match in 
+    matching_part_2_list = list()    #create blank list to store second half of match in 
     for (i in 1:num_of_matches) {
-      part_1 = gsub('-.*', '', matches_list[i]) %>% 
-        str_remove_all(' ')
-      matching_part_1_list = list.append(matching_part_1_list, part_1)
-      part_2 = gsub('.*-', '', matches_list[i])
-      matching_part_2_list = list.append(matching_part_2_list, part_2)
+      part_1 = gsub('-.*', '', matches_list[i])    #get first half of match 
+      matching_part_1_list = list.append(matching_part_1_list, part_1)    #add to list 
+      part_2 = gsub('.*-', '', matches_list[i])    #get second half od match 
+      matching_part_2_list = list.append(matching_part_2_list, part_2)    #add to list 
     }
     
-    inner_repeat_matching_code = ''
+    inner_repeat_matching_code = ''    #create blank string to store repeated code in 
     for (i in 1:num_of_choices) { 
-      resp_ident =  matching_ans_choices_codes_list[i]
-      ans_choice = ans_choices_list[i] 
+      resp_ident =  matching_ans_choices_codes_list[i]    #get the ident number from list 
+      ans_choice = ans_choices_list[i]    #get answer choice from list 
       inner_repeat_matching_code = paste(inner_repeat_matching_code, '<response_label ident="',resp_ident,'">
                 <material>
                   <mattext>',ans_choice,'</mattext>
                 </material>
-              </response_label>')
+              </response_label>')    #add to string 
     }
     
-    repeat_options_matching_code = ''
-    resp_val_list = list()
+    resp_val_list = list()    #create blank list to stroe response_ident in
     for (i in 1:num_of_matches) {
       resp_val = paste('response_', matching_part_1_codes_list[i]) %>% 
-        str_remove_all(' ')    #create response number 
-      resp_val_list = list.append(resp_val_list, resp_val)
+        str_remove_all(' ')    #create response_ident 
+      resp_val_list = list.append(resp_val_list, resp_val)    #add to list 
     }
     
+    repeat_options_matching_code = ''    #create blank string to store repeating section in 
     for (i in 1:num_of_matches) {
     repeat_options_matching_code = paste(repeat_options_matching_code, '<response_lid ident="',resp_val_list[i],'">
             <material>
@@ -399,13 +398,13 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
             <render_choice>
             ',inner_repeat_matching_code,'
             </render_choice>
-          </response_lid>')
+          </response_lid>')    #create the repeating chunk of code 
     }
     
-    repeat_correct_matches_code = ''
+    repeat_correct_matches_code = ''    #create blank string to store repeating section in 
     for (i in 1:num_of_matches) {
-      code_index = match(tolower(matching_part_2_list[i]), tolower(ans_choices_list))  
-      part_2_code = matching_ans_choices_codes_list[code_index] 
+      code_index = match(tolower(matching_part_2_list[i]), tolower(ans_choices_list))
+      part_2_code = matching_ans_choices_codes_list[code_index]    #get the ident of the match answer
       repeat_correct_matches_code = paste(repeat_correct_matches_code, '<respcondition>
             <conditionvar>
               <varequal respident="',resp_val_list[i],'">',part_2_code,'</varequal>
@@ -414,6 +413,7 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
           </respcondition>')
     }
     
+    #concatenate all the pieces of code together 
     question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
         <itemmetadata>
           <qtimetadata>
