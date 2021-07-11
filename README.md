@@ -19,17 +19,17 @@
 
 ## Additional Notes:
 ### Question Types Available: 
-#### - Multiple Choice 
+#### - Multiple Choice (multiple_choice)
 ##### Spreadsheet format answer choices: answer choice A; answer choice B; answer choice C; etc. 
-#### - Numeric (Range and Exact Answer) 
+#### - Numeric (Range and Exact Answer) (numeric)
 ##### Spreadsheet format Range answer: [1, 2] 
 ###### If you want multiple ranges to be acceptable: [1, 2]; [-1, -2]; etc. 
 ##### Spreadsheet format Exact Answer answer: 2
 ###### If you want multiple exact answers to be acceptable: 2; 1; etc. 
-#### - Open Ended 
-#### - Text Boxes 
-##### Spreadsheet format: put textbox words in the question_stem column. Only need to fill out question type (textbox) and question stem. 
-#### - Matching 
+#### - Open Ended (open_ended)
+#### - Text Boxes (text_box)
+##### Spreadsheet format: put textbox words in the question_stem column. Only need to fill out question type (text_box) and question stem. 
+#### - Matching (matching)
 ##### Spreadsheet format answer choices: match option A; match option B; match option C; etc. 
 ##### Spreadsheet format answer: explantory variable - match option B; response varaible - match option A; etc. 
 ### Ident Variable: 
