@@ -3,7 +3,7 @@
 ## How to use the code: 
 
 ### Step 1: 
-#### Put quiz questions into an .xlsx file with the following column names included: 'question_identifier', 'type_questions', 'points', 'question_stem', 'question_options', and 'answer'
+#### Put quiz questions into an .xlsx file with the following column names included: 'question_identifier', 'type_question', 'points', 'question_stem', 'question_options', and 'answer'
 
 ### Step 2: 
 #### Change all sections that say 'USER INPUT': set working directory, import .xlsx file, quiz title, time limit, max attempts, and write out .xml file name (at end of file)
