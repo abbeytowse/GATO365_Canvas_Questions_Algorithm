@@ -8,10 +8,10 @@ library(readxl)
 setwd("C:/Users/towse/R/canvas_quiz/pieces_of_code")    #set directory 
 
 #USER INPUT 
-question_bank = read_xlsx('mc_text_box_numeric_open_ended_matching_file_upload_select_all.xlsx')    #import spreadsheet with questions 
+question_bank = read_xlsx('template_of_question_types.xlsx')    #import spreadsheet with questions 
 
 #USER INPUT
-title = 'MC, Textbox, Numeric, Open Ended Quiz, Matching, File Upload, and Select All'    #name the quiz 
+title = 'testing template'    #name the quiz 
 time_limit = 'unlimited'    #set time limit (minutes or 'unlimited') 
 max_attempts = 'unlimited'    #set max attempts (integer or 'unlimited')
 
@@ -496,7 +496,7 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
     for (i in 1:num_corr_answers) {
       corr_answer = answers_list[i]
       corr_ans_index = match(tolower(corr_answer), tolower(ans_choices_list))
-      corr_ans_index_list = list.append(index_list, corr_ans_index)
+      corr_ans_index_list = list.append(corr_ans_index_list, corr_ans_index)
     }
     
     select_all_ans_choices_codes = ''   #create string to store codes 
@@ -602,4 +602,4 @@ xml_chunk = paste(beginning_xml_chunk, question_xml_chunk, ending_xml_chunk)
 
 #write xml file 
 #USER INPUT
-write(xml_chunk, file = 'I added select all that apply.xml')
+write(xml_chunk, file = 'testing_template.xml')
