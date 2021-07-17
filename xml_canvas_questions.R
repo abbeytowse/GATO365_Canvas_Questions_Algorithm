@@ -11,7 +11,7 @@ setwd("C:/Users/towse/R/canvas_quiz/pieces_of_code")    #set directory
 question_bank = read_xlsx('template_of_question_types.xlsx')    #import spreadsheet with questions 
 
 #USER INPUT
-title = 'testing template'    #name the quiz 
+title = 'fill_in_the_blank_added'    #name the quiz 
 time_limit = 'unlimited'    #set time limit (minutes or 'unlimited') 
 max_attempts = 'unlimited'    #set max attempts (integer or 'unlimited')
 
@@ -587,6 +587,76 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
         </resprocessing>
       </item>')
   }
+  else if (question_bank$type_question[i] == 'fill_in_the_blank') {
+    correct_answers = question_bank$answer[i]    #get correct answers 
+    correct_ans_list = as.list(str_split(correct_answers, ';')[[1]])    #put into list 
+    num_corr_ans = length(correct_ans_list)
+    
+    #create code for each correct answer
+    fill_in_blank_ans_codes = ''    #create blank string to concatenate to 
+    fill_in_blank_ans_codes_list = list()    #create empty list to append to 
+    for (i in 1:num_corr_ans) {
+      num = toString(i)
+      four_digit_code = paste(num, num, num, num) %>% 
+        str_remove_all(' ')    #create unique code for each answer choice
+      fill_in_blank_ans_codes = paste(fill_in_blank_ans_codes, four_digit_code, ',')    #make codes string 
+      fill_in_blank_ans_codes_list = list.append(fill_in_blank_ans_codes_list, four_digit_code)    #make codes list 
+    }
+    fill_in_blank_ans_codes = str_remove_all(fill_in_blank_ans_codes, ' ')    #remove excess spaces
+    
+    #create code that indicates correct answers 
+    acceptable_answers_code = ''
+    for (i in 1:num_corr_ans) {
+      answer = correct_ans_list[i]
+      acceptable_answers_code = paste(acceptable_answers_code, 
+      '<varequal respident="response1">',answer,'</varequal>') 
+    }
+    
+    #add to xml string
+    question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
+        <itemmetadata>
+          <qtimetadata>
+            <qtimetadatafield>
+              <fieldlabel>question_type</fieldlabel>
+              <fieldentry>short_answer_question</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>points_possible</fieldlabel>
+              <fieldentry>',points,'</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>original_answer_ids</fieldlabel>
+              <fieldentry>',fill_in_blank_ans_codes,'</fieldentry>
+            </qtimetadatafield>
+            <qtimetadatafield>
+              <fieldlabel>assessment_question_identifierref</fieldlabel>
+              <fieldentry>g6cacc1c5ea4658cd9b8161a91534b3ab</fieldentry>
+            </qtimetadatafield>
+          </qtimetadata>
+        </itemmetadata>
+        <presentation>
+          <material>
+            <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;',question,'&lt;/p&gt;&lt;/div&gt;</mattext>
+          </material>
+          <response_str ident="response1" rcardinality="Single">
+            <render_fib>
+              <response_label ident="answer1" rshuffle="No"/>
+            </render_fib>
+          </response_str>
+        </presentation>
+        <resprocessing>
+          <outcomes>
+            <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+          </outcomes>
+          <respcondition continue="No">
+            <conditionvar>
+              ',acceptable_answers_code,'
+            </conditionvar>
+            <setvar action="Set" varname="SCORE">100</setvar>
+          </respcondition>
+        </resprocessing>
+      </item>')
+  }
 }
 
 #questions stop 
@@ -602,4 +672,4 @@ xml_chunk = paste(beginning_xml_chunk, question_xml_chunk, ending_xml_chunk)
 
 #write xml file 
 #USER INPUT
-write(xml_chunk, file = 'testing_template.xml')
+write(xml_chunk, file = 'added_fill_in_the_blank.xml')
