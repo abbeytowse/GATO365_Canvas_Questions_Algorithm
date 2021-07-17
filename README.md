@@ -54,3 +54,5 @@
 #### Currently this code cannot upload/add images to quiz questions. 
 ### imsmanifest.xml :
 #### This code is currently not needed to upload a quiz to Canvas. No need to run or include in the .zip file. May be of interest in the future if images can be uploaded. 
+### assessment_metadata.xml :
+#### This code is currently not needed to upload a quiz to Canvas. No need to run or include in the .zip file. May be of interest in the future to indicate quiz deadlines, shuffle answers, etc. via the XML code. Likely easier to set these settings manually. 
