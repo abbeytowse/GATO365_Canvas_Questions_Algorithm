@@ -12,9 +12,6 @@
 #### Run the code.
 
 ### Step 4: 
-#### Take the .xml file you create, place into a folder, and zip the folder (Canvas only accepts .zip files)
-
-### Step 5: 
 #### Go to your Canvas course. Go to settings (left hand bar). Click 'Import Course Content' (right hand bar). For content type select 'QTI.zip file'. 'Choose file'. Click 'Import' (do NOT check 'Overwrite assessment content with matching IDs).  
 
 ## Additional Notes:
