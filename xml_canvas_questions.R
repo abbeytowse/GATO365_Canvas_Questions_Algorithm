@@ -5,13 +5,13 @@ library(readxl)
 
 #user input begins 
 #USER INPUT 
-setwd("C:/Users/towse/R/canvas_quiz/pieces_of_code")    #set directory 
+setwd("D:/Documents/GATO365/DSA II - Module Quizzes")    #set directory 
 
 #USER INPUT 
-question_bank = read_xlsx('template_of_question_types.xlsx')    #import spreadsheet with questions 
+question_bank = read_xlsx('DSA_Internship_Day_15_Quiz.xlsx')    #import spreadsheet with questions 
 
 #USER INPUT
-title = 'fill_in_the_blank_added'    #name the quiz 
+title = 'Day 15 Concepts Quiz'    #name the quiz 
 time_limit = 'unlimited'    #set time limit (minutes or 'unlimited') 
 max_attempts = 'unlimited'    #set max attempts (integer or 'unlimited')
 
@@ -672,4 +672,7 @@ xml_chunk = paste(beginning_xml_chunk, question_xml_chunk, ending_xml_chunk)
 
 #write xml file 
 #USER INPUT
-write(xml_chunk, file = 'added_fill_in_the_blank.xml')
+setwd("D:/Documents/GATO365/DSA II - Module Quizzes/DSA_Intership_Day_15_Quiz")    #where you are writting the file to
+write(xml_chunk, file = 'day_15_concepts_quiz.xml')
+zip('myZippedQuiz.zip', 'day_15_concepts_quiz.xml')
+setwd("D:/Documents/GATO365/DSA II - Module Quizzes")
