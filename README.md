@@ -17,7 +17,8 @@
 ## Additional Notes:
 ### Question Types Available: 
 #### - Multiple Choice (multiple_choice)
-##### Spreadsheet format answer choices: answer choice A; answer choice B; answer choice C; etc. 
+##### Spreadsheet format answer choices: answer choice A; answer choice B; answer choice C; etc.
+###### Correct answer must be listed first
 #### - Numeric (Range and Exact Answer) (numeric)
 ##### Spreadsheet format Range answer: [1, 2] 
 ###### If you want multiple ranges to be acceptable: [1, 2]; [-1, -2]; etc. 
