@@ -6,15 +6,16 @@ library(zip)
 
 #user input begins 
 #USER INPUT 
-setwd("D:/Documents/GATO365/DSA II - Module Quizzes")    #set directory 
+setwd("/cloud/project/Module Quizzes")    #set directory 
 
 #USER INPUT 
-question_bank = read_xlsx('DSA_Internship_Day_15_Quiz.xlsx')    #import spreadsheet with questions 
+question_bank = read_xlsx('template_of_question_types.xlsx')    #import spreadsheet with questions
 
 #USER INPUT
-title = 'Day 15 Concepts Quiz'    #name the quiz 
+title = 'Template of Question Types Quiz'    #name the quiz 
 time_limit = 'unlimited'    #set time limit (minutes or 'unlimited') 
 max_attempts = 'unlimited'    #set max attempts (integer or 'unlimited')
+shuffle_answers = TRUE     # set shuffle answers (TRUE or FALSE)
 
 #USER INPUT - minutes code currently is not functional
 #if no images input 'no_images'
@@ -51,7 +52,8 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
   
   ident = question_bank$question_identifier[i]    #get question identifier
   points = question_bank$points[i]    #get question point value 
-  question = question_bank$question_stem[i]    #get question 
+  question = question_bank$question_stem[i]    #get question
+  print(question)
   
   image_string = ''    #create blank string for default image name/no image 
   #if (str_detect(location_num_list[1], toString(i)))    #if this question has an image 
@@ -64,8 +66,12 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
   
   if (question_bank$type_question[i] == 'multiple_choice') {    #if multiple choice
     question_options = question_bank$question_options[i]
-    ans_choices_list = as.list(str_split(question_options, ';')[[1]])    #put into list 
+    ans_choices_list = as.list(str_split(question_options, ';')[[1]])    #put into list
     
+    if (shuffle_answers) {
+      ans_choices_list = sample(ans_choices_list, length(ans_choices_list), replace=FALSE) # shuffle answer choices
+    }
+      
     num_ans_choices = length(ans_choices_list)    #get number of answer choices
     corr_ans = question_bank$answer[i]    #get the correct answer 
     corr_ans_index = match(tolower(corr_ans), tolower(ans_choices_list))
@@ -338,7 +344,12 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
   }
   else if (question_bank$type_question[i] == 'matching') {
     question_options = paste('', question_bank$question_options[i])    #add space in front for match() purposes
-    ans_choices_list = as.list(str_split(question_options, ';')[[1]])    #put into list 
+    ans_choices_list = as.list(str_split(question_options, ';')[[1]])    #put into list
+    
+    if (shuffle_answers) {
+      ans_choices_list = sample(ans_choices_list, length(ans_choices_list), replace=FALSE) # shuffle answer choices
+    }
+    
     num_of_choices = length(ans_choices_list)    #get the num of answer choices
     
     matches = question_bank$answer[i]    #get the match combinations 
@@ -486,7 +497,12 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
   }
   else if (question_bank$type_question[i] == 'select_all') {
     select_all_ans_options = question_bank$question_options[i]
-    ans_choices_list = as.list(str_split(select_all_ans_options, ';')[[1]])    #put into list 
+    ans_choices_list = as.list(str_split(select_all_ans_options, ';')[[1]])    #put into list
+    
+    if (shuffle_answers) {
+      ans_choices_list = sample(ans_choices_list, length(ans_choices_list), replace=FALSE) # shuffle answer choices
+    }
+    
     num_ans_choices = length(ans_choices_list)    #get number of answer choices
     
     answers = question_bank$answer[i]
@@ -658,6 +674,86 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
         </resprocessing>
       </item>')
   }
+  else if (question_bank$type_question[i] == 'true_false') {  # if true/false -> similar to multiple choice but only has two options
+    question_options = question_bank$question_options[i]
+    ans_choices_list = as.list(str_split(question_options, ';')[[1]]) # put into list
+   
+    if (shuffle_answers) {
+      ans_choices_list = sample(ans_choices_list, length(ans_choices_list), replace=FALSE) # shuffle answer choices
+    }
+    
+    num_ans_choices = length(ans_choices_list)    #get number of answer choices
+    corr_ans = question_bank$answer[i]    #get the correct answer 
+    corr_ans_index = match(tolower(corr_ans), tolower(ans_choices_list))
+    corr_ans_resp = paste('response', corr_ans_index[1]) %>% 
+      str_remove_all(' ')    #determine what answer choice option is correct 
+    corr_ans_resp_code = paste(corr_ans_index, corr_ans_index, corr_ans_index, corr_ans_index) %>% 
+      str_remove_all(' ')    #create code to correspond with correct answer choice
+    
+    ans_choices_codes = ''   #create string to store codes 
+    ans_choices_codes_list = list()   #create empty list to store codes 
+    for (i in 1:num_ans_choices){
+      num = toString(i)
+      four_digit_code = paste(num, num, num, num) %>% 
+        str_remove_all(' ')    #create unique code for each answer choice
+      ans_choices_codes = paste(ans_choices_codes, four_digit_code, ',')    #make codes string 
+      ans_choices_codes_list = list.append(ans_choices_codes_list, four_digit_code)    #make codes list 
+    }
+    ans_choices_codes = str_remove_all(ans_choices_codes, ' ')    #remove spaces from string 
+    
+    repeat_code = ''   #create string to store the answer choices xml code 
+    for (i in 1:num_ans_choices) {
+      resp_val = paste('response', i) %>% 
+        str_remove_all(' ')    #create response number 
+      repeat_code = paste(repeat_code, '<response_lid ident="',resp_val, '" rcardinality="Single">
+                <render_choice>
+                  <response_label ident="',ans_choices_codes_list[i],'">
+                    <material>
+                      <mattext texttype="text/plain">',ans_choices_list[i],'</mattext>
+                    </material>
+                  </response_label>
+                </render_choice>
+              </response_lid>')
+    }
+    
+    question_xml_chunk = paste(question_xml_chunk,'<item ident="', ident,'" title="Question">
+            <itemmetadata>
+              <qtimetadata>
+                <qtimetadatafield>
+                  <fieldlabel>question_type</fieldlabel>
+                  <fieldentry>multiple_choice_question</fieldentry>
+                </qtimetadatafield>
+                <qtimetadatafield>
+                  <fieldlabel>points_possible</fieldlabel>
+                  <fieldentry>',points,'</fieldentry>
+                </qtimetadatafield>
+                <qtimetadatafield>
+                  <fieldlabel>original_answer_ids</fieldlabel>
+                  <fieldentry>', ans_choices_codes, '</fieldentry>
+                </qtimetadatafield>
+                <qtimetadatafield>
+                  <fieldlabel>assessment_question_identifierref</fieldlabel>
+                  <fieldentry>gfa3c0e03b04438955b483b63d7e3eb0d</fieldentry>
+                </qtimetadatafield>
+              </qtimetadata>
+            </itemmetadata>
+            <presentation>
+              <material>
+                <mattext texttype="text/html">&lt;div&gt;&lt;p&gt;', question, image_string,'&lt;/p&gt;&lt;/div&gt;</mattext>
+              </material>', repeat_code,'</presentation>
+            <resprocessing>
+              <outcomes>
+                <decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/>
+              </outcomes>
+              <respcondition continue="No">
+                <conditionvar>
+                  <varequal respident="',corr_ans_resp,'">',corr_ans_resp_code,'</varequal>
+                </conditionvar>
+                <setvar action="Set" varname="SCORE">100</setvar>
+              </respcondition>
+            </resprocessing>
+          </item>')
+  }
 }
 
 #questions stop 
@@ -669,11 +765,12 @@ ending_xml_chunk = '    </section>
 '
 
 #complete xml code 
-xml_chunk = paste(beginning_xml_chunk, question_xml_chunk, ending_xml_chunk) 
+xml_chunk = paste(beginning_xml_chunk, question_xml_chunk, ending_xml_chunk)
 
 #write xml file 
 #USER INPUT
-setwd("D:/Documents/GATO365/DSA II - Module Quizzes/DSA_Intership_Day_15_Quiz")    #where you are writting the file to
-write(xml_chunk, file = 'day_15_concepts_quiz.xml')
-zip('myZippedQuiz.zip', 'day_15_concepts_quiz.xml')
-setwd("D:/Documents/GATO365/DSA II - Module Quizzes")
+setwd("/cloud/project/Module Quizzes/template_of_question_types")   #where you are writing the file to
+write(xml_chunk, file = 'template_of_question_types_quiz.xml')
+# zip('myZippedQuiz.zip', 'template_of_question_types_quiz.xml')
+setwd("/cloud/project/Module Quizzes")
+
