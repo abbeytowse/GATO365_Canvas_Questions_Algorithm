@@ -81,6 +81,33 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
     question = italicized_question
   }
   
+  underlines = str_count(question, "_") # determine whether there are italics in question
+  if (underlines > 0) {
+    words = strsplit(question, " ")[[1]]
+    underlined_question = ""
+    for (word in words) { # iterate through every word in the question
+      underline = str_count(word, "_") # determine whether the word is underlined
+      if (underline > 0) { # format for underlined text
+        underlined_question = paste(underlined_question, "<span style=\"text-decoration: underline;\">")
+        
+        question_mark = str_count(word, "\\?")
+        if (question_mark > 0) { # removes question mark so it is not underlined, adds it in at the end
+          word_without_question_mark = gsub("\\?", "", word)
+          underlined_question = paste(underlined_question, str_replace_all(word_without_question_mark, "([_])", ""), sep="")
+          underlined_question = paste(underlined_question, "</span>", sep="")
+          underlined_question = paste(underlined_question, "?", sep="")
+        } else {
+          underlined_question = paste(underlined_question, str_replace_all(word, "([_])", ""), sep="")
+          underlined_question = paste(underlined_question, "</span>", sep="")
+        }
+        
+      } else {
+        underlined_question = paste(underlined_question, word)
+      }
+    }
+    question = underlined_question
+  }
+  
   image_string = ''    #create blank string for default image name/no image 
   #if (str_detect(location_num_list[1], toString(i)))    #if this question has an image 
   #{
