@@ -53,7 +53,33 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
   ident = question_bank$question_identifier[i]    #get question identifier
   points = question_bank$points[i]    #get question point value 
   question = question_bank$question_stem[i]    #get question
-  print(question)
+  
+  italics = str_count(question, "\\*") # determine whether there are italics in question
+  if (italics > 0) {
+    words = strsplit(question, " ")[[1]]
+    italicized_question = ""
+    for (word in words) { # iterate through every word in the question
+      italic = str_count(word, "\\*") # determine whether the word is italicized
+      if (italic > 0) { # format for italicized text
+        italicized_question = paste(italicized_question, "<em>")
+        
+        question_mark = str_count(word, "\\?")
+        if (question_mark > 0) { # removes question mark so it is not italicized, adds it in at the end
+          word_without_question_mark = gsub("\\?", "", word)
+          italicized_question = paste(italicized_question, str_replace_all(word_without_question_mark, "([\\*])", ""), sep="")
+          italicized_question = paste(italicized_question, "</em>", sep="")
+          italicized_question = paste(italicized_question, "?", sep="")
+        } else {
+          italicized_question = paste(italicized_question, str_replace_all(word, "([\\*])", ""), sep="")
+          italicized_question = paste(italicized_question, "</em>", sep="")
+        }
+        
+      } else {
+        italicized_question = paste(italicized_question, word)
+      }
+    }
+    question = italicized_question
+  }
   
   image_string = ''    #create blank string for default image name/no image 
   #if (str_detect(location_num_list[1], toString(i)))    #if this question has an image 
@@ -771,6 +797,5 @@ xml_chunk = paste(beginning_xml_chunk, question_xml_chunk, ending_xml_chunk)
 #USER INPUT
 setwd("/cloud/project/Module Quizzes/template_of_question_types")   #where you are writing the file to
 write(xml_chunk, file = 'template_of_question_types_quiz.xml')
-# zip('myZippedQuiz.zip', 'template_of_question_types_quiz.xml')
+zip('myZippedQuiz.zip', 'template_of_question_types_quiz.xml')
 setwd("/cloud/project/Module Quizzes")
-
