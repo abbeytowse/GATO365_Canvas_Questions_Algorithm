@@ -16,6 +16,8 @@ title = 'Template of Question Types Quiz'    #name the quiz
 time_limit = 'unlimited'    #set time limit (minutes or 'unlimited') 
 max_attempts = 'unlimited'    #set max attempts (integer or 'unlimited')
 shuffle_answers = TRUE     # set shuffle answers (TRUE or FALSE)
+text_size = "12pt"     # set text size ("8pt", "10pt", "12pt", "14pt", "18pt", "24pt", or "36pt")
+font = "p"     # set font type ("h2", "h3", "h4", "h2", "pre", or "p")
 
 #USER INPUT - minutes code currently is not functional
 #if no images input 'no_images'
@@ -107,6 +109,41 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
     }
     question = underlined_question
   }
+  
+  # create the beginning tag for the font
+  font_details = ""
+  font_details = paste("<", font, sep = "")
+  font_details = paste(font_details, ">", sep = "")
+  
+  # concat beginning font tag with beginning div tag
+  question_details = "<div>"
+  question_details = paste(question_details, font_details, sep = "")
+  
+  # create the beginning tag for the text size
+  text_size_details = "<span style=\"font-size: "
+  text_size_details = paste(text_size_details, text_size, sep = "")
+  text_size_details = paste(text_size_details, ";\">", sep = "")
+  
+  # concat beginning text size tag with other tags and question
+  question_details = paste(question_details, text_size_details, sep = "")
+  question_details = paste(question_details, question, sep = "")
+  
+  # concat tags and question with close tag for text size
+  question_details = paste(question_details, "</span>", sep = "")
+  
+  # create close tag for the font
+  font_details = ""
+  font_details = paste("</", font, sep = "")
+  font_details = paste(font_details, ">", sep = "")
+  
+  # concat font close tag with other tags and question 
+  question_details = paste(question_details, font_details, sep = "")
+  
+  # concat other tags and question with close div tag
+  question_details = paste(question_details, "</div>", sep = "")
+  
+  # set question to the full string with all tags and questions
+  question = question_details
   
   image_string = ''    #create blank string for default image name/no image 
   #if (str_detect(location_num_list[1], toString(i)))    #if this question has an image 
