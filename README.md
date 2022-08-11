@@ -6,7 +6,7 @@
 #### Put quiz questions into an .xlsx file with the following column names included: 'question_identifier', 'type_question', 'points', 'question_stem', 'question_options', and 'answer'
 
 ### Step 2: 
-#### Change all sections that say 'USER INPUT': set working directory, import .xlsx file, quiz title, time limit, max attempts, and write out .xml file name (at end of file)
+#### Change all sections that say 'USER INPUT': set working directory, import .xlsx file, quiz title, time limit, max attempts, shuffle answers, text size, font, and write out .xml file name (at end of file)
 
 ### Step 3: 
 #### Run the code.
@@ -40,6 +40,9 @@
 ###### - must type out the blank using underscores 
 ##### Spread sheet answer format: woof; bark; etc. 
 ###### - list all acceptable answers 
+#### - True/False (true_false)
+##### Spread sheet format answer choices: True; False;
+##### Spread sheet answer format: True;, etc.
 ### Ident Variable: 
 #### Each question/text box needs a UNIQUE identification number. If two ident numbers are the same, both questions won't be in the quiz, only one.
 #### The ident variable can be any length (single to infinite digits). 
@@ -54,3 +57,35 @@
 #### This code is currently not needed to upload a quiz to Canvas. No need to run or include in the .zip file. May be of interest in the future if images can be uploaded. 
 ### assessment_metadata.xml :
 #### This code is currently not needed to upload a quiz to Canvas. No need to run or include in the .zip file. May be of interest in the future to indicate quiz deadlines, shuffle answers, etc. via the XML code. Likely easier to set these settings manually. 
+### 'USER INPUT' Options:
+#### Each 'USER INPUT' option should be manually entered by the user to develop the specific settings for Canvas quizzes. These inputted options will be referred to within the code that develops the quiz.
+#### - Title (title)
+##### Name of the quiz
+#### - Time Limit (time_limit)
+##### Time limit allowance for quiz
+###### - 'unlimited': No time limit for quiz
+###### - minutes: Time limit for quiz, in minutes (integer format)
+#### - Max Attempts (max_attempts)
+##### Number of attempts allowed for quiz
+###### - 'unlimited': No attempt limit for quiz
+###### - integer: Number of attempts for quiz (integer format)
+#### - Shuffle Answers (shuffle_answers)
+##### Shuffle answer choices for multiple choice, matching, select all, and true/false questions
+###### - TRUE: Shuffle answer choices in quiz
+###### - FALSE: Do not shuffle answer choices in quiz
+#### - Text Size (text_size)
+##### Text size for questions in quiz
+###### - '8pt': 8pt text size for questions in quiz
+###### - '10pt': 10pt text size for questions in quiz
+###### - '12pt': 12pt text size for questions in quiz
+###### - '14pt': 14pt text size for questions in quiz
+###### - '18pt': 18pt text size for questions in quiz
+###### - '24pt': 24pt text size for questions in quiz
+###### - '36pt': 36pt text size for questions in quiz
+#### - Font (font)
+##### Font for questions in quiz
+###### - 'h2': Heading 2 font for questions in quiz
+###### - 'h2': Heading 3 font for questions in quiz
+###### - 'h4': Heading 4 font for questions in quiz
+###### - 'pre': Preformatted font for questions in quiz
+###### - 'p': Paragraph font for questions in quiz
