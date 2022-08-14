@@ -12,7 +12,12 @@
 #### Run the code.
 
 ### Step 4: 
-#### Go to your Canvas course. Go to settings (left hand bar). Click 'Import Course Content' (right hand bar). For content type select 'QTI.zip file'. 'Choose file'. Click 'Import' (do NOT check 'Overwrite assessment content with matching IDs).  
+#### Go to your Canvas course. 
+
+- Go to settings (left hand bar). 
+- Click 'Import Course Content' (right hand bar). 
+- For content type select 'QTI.zip file'.  --> 'Choose file'. 
+- Click 'Import' (do NOT check 'Overwrite assessment content with matching IDs).  
 
 ## Additional Notes:
 ### Question Types Available: 
