@@ -4,188 +4,53 @@ library(rlist)
 library(readxl)
 library(zip)
 
-#user input begins 
-#USER INPUT 
-setwd("/cloud/project/Module Quizzes")    #set directory 
+# #user input begins 
+# #USER INPUT 
+setwd("/cloud/project/Module Quizzes")    #set directory
+# setwd("~/Important_Files/Life/02_Misc/Desktop/loading_questions")
+# #USER INPUT 
+# question_bank = read_xlsx('template_of_question_types.xlsx')    #import spreadsheet with questions
 
-#USER INPUT 
-question_bank = read_xlsx('template_of_question_types.xlsx')    #import spreadsheet with questions
-
-#USER INPUT
-title = 'Template of Question Types Quiz'    #name the quiz 
-time_limit = 'unlimited'    #set time limit (minutes or 'unlimited') 
-max_attempts = 'unlimited'    #set max attempts (integer or 'unlimited')
-shuffle_answers = TRUE     # set shuffle answers (TRUE or FALSE)
-text_size = "12pt"     # set text size ("8pt", "10pt", "12pt", "14pt", "18pt", "24pt", or "36pt")
-font = "p"     # set font type ("h2", "h3", "h4", "h2", "pre", or "p")
-
-#USER INPUT - minutes code currently is not functional
-#if no images input 'no_images'
-#image_name_list = list('mySquirrelImage.jpg')    #list the images to use in the quiz
-#location_num_list = list('item_1', 'item_4')    #list the location of each image 
-
-#num_of_images = length(image_name_list)    #get the num of images in the file 
-
-#user input ends 
-
-#beginning part of xml file, before questions 
-beginning_xml_chunk = paste('<?xml version="1.0" encoding="UTF-8"?>
-<questestinterop xmlns="http://www.imsglobal.org/xsd/ims_qtiasiv1p2" 
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation=
-"http://www.imsglobal.org/xsd/ims_qtiasiv1p2 http://www.imsglobal.org/xsd/ims_qtiasiv1p2p1.xsd">
-  <assessment ident="gacc8cbc8c785376e85ccd059145646cb" title="', title,'">
-    <qtimetadata>
-      <qtimetadatafield>
-        <fieldlabel>qmd_timelimit</fieldlabel>
-        <fieldentry>', time_limit, '</fieldentry>
-      </qtimetadatafield>
-      <qtimetadatafield>
-        <fieldlabel>cc_maxattempts</fieldlabel>
-        <fieldentry>', max_attempts, '</fieldentry>
-      </qtimetadatafield>
-    </qtimetadata>
-    <section ident="root_section">')
-
-#questions start 
-
-question_xml_chunk = ''    #create string of questions in xml
-text_box_num = 0    # declare and initiate variable 
-for (i in 1:nrow(question_bank)) {    #iterate through each row of the file 
+createMultipleChoiceQuestion <- function(
+    input_question_bank,
+    i,
+    input_shuffle_answers,
+    question_xml_chunk,
+    ident,
+    points,
+    question,
+    image_string){
+  question_options = input_question_bank$question_options[i]
+  ans_choices_list = as.list(str_split(question_options, ';')[[1]])    #put into list
   
-  ident = question_bank$question_identifier[i]    #get question identifier
-  points = question_bank$points[i]    #get question point value 
-  question = question_bank$question_stem[i]    #get question
-  
-  italics = str_count(question, "\\*") # determine whether there are italics in question
-  if (italics > 0) {
-    words = strsplit(question, " ")[[1]]
-    italicized_question = ""
-    for (word in words) { # iterate through every word in the question
-      italic = str_count(word, "\\*") # determine whether the word is italicized
-      if (italic > 0) { # format for italicized text
-        italicized_question = paste(italicized_question, "<em>")
-        
-        question_mark = str_count(word, "\\?")
-        if (question_mark > 0) { # removes question mark so it is not italicized, adds it in at the end
-          word_without_question_mark = gsub("\\?", "", word)
-          italicized_question = paste(italicized_question, str_replace_all(word_without_question_mark, "([\\*])", ""), sep="")
-          italicized_question = paste(italicized_question, "</em>", sep="")
-          italicized_question = paste(italicized_question, "?", sep="")
-        } else {
-          italicized_question = paste(italicized_question, str_replace_all(word, "([\\*])", ""), sep="")
-          italicized_question = paste(italicized_question, "</em>", sep="")
-        }
-        
-      } else {
-        italicized_question = paste(italicized_question, word)
-      }
-    }
-    question = italicized_question
+  if (input_shuffle_answers) {
+    ans_choices_list = sample(ans_choices_list, length(ans_choices_list), replace=FALSE) # shuffle answer choices
   }
   
-  underlines = str_count(question, "_") # determine whether there are italics in question
-  if (underlines > 0) {
-    words = strsplit(question, " ")[[1]]
-    underlined_question = ""
-    for (word in words) { # iterate through every word in the question
-      underline = str_count(word, "_") # determine whether the word is underlined
-      if (underline > 0) { # format for underlined text
-        underlined_question = paste(underlined_question, "<span style=\"text-decoration: underline;\">")
-        
-        question_mark = str_count(word, "\\?")
-        if (question_mark > 0) { # removes question mark so it is not underlined, adds it in at the end
-          word_without_question_mark = gsub("\\?", "", word)
-          underlined_question = paste(underlined_question, str_replace_all(word_without_question_mark, "([_])", ""), sep="")
-          underlined_question = paste(underlined_question, "</span>", sep="")
-          underlined_question = paste(underlined_question, "?", sep="")
-        } else {
-          underlined_question = paste(underlined_question, str_replace_all(word, "([_])", ""), sep="")
-          underlined_question = paste(underlined_question, "</span>", sep="")
-        }
-        
-      } else {
-        underlined_question = paste(underlined_question, word)
-      }
-    }
-    question = underlined_question
+  num_ans_choices = length(ans_choices_list)    #get number of answer choices
+  corr_ans = input_question_bank$answer[i]    #get the correct answer 
+  corr_ans_index = match(tolower(corr_ans), tolower(ans_choices_list))
+  corr_ans_resp = paste('response', corr_ans_index[1]) %>% 
+    str_remove_all(' ')    #determine what answer choice option is correct 
+  corr_ans_resp_code = paste(corr_ans_index, corr_ans_index, corr_ans_index, corr_ans_index) %>% 
+    str_remove_all(' ')    #create code to correspond with correct answer choice
+  
+  mc_ans_choices_codes = ''   #create string to store codes 
+  mc_ans_choices_codes_list = list()   #create empty list to store codes 
+  for (i in 1:num_ans_choices){
+    num = toString(i)
+    four_digit_code = paste(num, num, num, num) %>% 
+      str_remove_all(' ')    #create unique code for each answer choice
+    mc_ans_choices_codes = paste(mc_ans_choices_codes, four_digit_code, ',')    #make codes string 
+    mc_ans_choices_codes_list = list.append(mc_ans_choices_codes_list, four_digit_code)    #make codes list 
   }
+  mc_ans_choices_codes = str_remove_all(mc_ans_choices_codes, ' ')    #remove spaces from string 
   
-  # create the beginning tag for the font
-  font_details = ""
-  font_details = paste("<", font, sep = "")
-  font_details = paste(font_details, ">", sep = "")
-  
-  # concat beginning font tag with beginning div tag
-  question_details = "<div>"
-  question_details = paste(question_details, font_details, sep = "")
-  
-  # create the beginning tag for the text size
-  text_size_details = "<span style=\"font-size: "
-  text_size_details = paste(text_size_details, text_size, sep = "")
-  text_size_details = paste(text_size_details, ";\">", sep = "")
-  
-  # concat beginning text size tag with other tags and question
-  question_details = paste(question_details, text_size_details, sep = "")
-  question_details = paste(question_details, question, sep = "")
-  
-  # concat tags and question with close tag for text size
-  question_details = paste(question_details, "</span>", sep = "")
-  
-  # create close tag for the font
-  font_details = ""
-  font_details = paste("</", font, sep = "")
-  font_details = paste(font_details, ">", sep = "")
-  
-  # concat font close tag with other tags and question 
-  question_details = paste(question_details, font_details, sep = "")
-  
-  # concat other tags and question with close div tag
-  question_details = paste(question_details, "</div>", sep = "")
-  
-  # set question to the full string with all tags and questions
-  question = question_details
-  
-  image_string = ''    #create blank string for default image name/no image 
-  #if (str_detect(location_num_list[1], toString(i)))    #if this question has an image 
-  #{
-  #image_name = image_name_list[1]    #get image name 
-  #image_string = paste('&amp;nbsp;&lt;/p&gt;&lt;p&gt;&lt;img src="$IMS-CC-FILEBASE$/Uploaded%20Media/',image_name,'" alt="',image_name,'"&gt;&amp;nbsp;')
-  #image_name_list = image_name_list[-1]     #remove image name from list 
-  #location_num_list = location_num_list[-1]    #remove item num from list 
-  #}
-  
-  if (question_bank$type_question[i] == 'multiple_choice') {    #if multiple choice
-    question_options = question_bank$question_options[i]
-    ans_choices_list = as.list(str_split(question_options, ';')[[1]])    #put into list
-    
-    if (shuffle_answers) {
-      ans_choices_list = sample(ans_choices_list, length(ans_choices_list), replace=FALSE) # shuffle answer choices
-    }
-      
-    num_ans_choices = length(ans_choices_list)    #get number of answer choices
-    corr_ans = question_bank$answer[i]    #get the correct answer 
-    corr_ans_index = match(tolower(corr_ans), tolower(ans_choices_list))
-    corr_ans_resp = paste('response', corr_ans_index[1]) %>% 
-      str_remove_all(' ')    #determine what answer choice option is correct 
-    corr_ans_resp_code = paste(corr_ans_index, corr_ans_index, corr_ans_index, corr_ans_index) %>% 
-      str_remove_all(' ')    #create code to correspond with correct answer choice
-    
-    mc_ans_choices_codes = ''   #create string to store codes 
-    mc_ans_choices_codes_list = list()   #create empty list to store codes 
-    for (i in 1:num_ans_choices){
-      num = toString(i)
-      four_digit_code = paste(num, num, num, num) %>% 
-        str_remove_all(' ')    #create unique code for each answer choice
-      mc_ans_choices_codes = paste(mc_ans_choices_codes, four_digit_code, ',')    #make codes string 
-      mc_ans_choices_codes_list = list.append(mc_ans_choices_codes_list, four_digit_code)    #make codes list 
-    }
-    mc_ans_choices_codes = str_remove_all(mc_ans_choices_codes, ' ')    #remove spaces from string 
-    
-    repeat_mc_code = ''   #create string to store the answer choices xml code 
-    for (i in 1:num_ans_choices) {
-      resp_val = paste('response', i) %>% 
-        str_remove_all(' ')    #create response number 
-      repeat_mc_code = paste(repeat_mc_code, '<response_lid ident="',resp_val, '" rcardinality="Single">
+  repeat_mc_code = ''   #create string to store the answer choices xml code 
+  for (i in 1:num_ans_choices) {
+    resp_val = paste('response', i) %>% 
+      str_remove_all(' ')    #create response number 
+    repeat_mc_code = paste(repeat_mc_code, '<response_lid ident="',resp_val, '" rcardinality="Single">
                 <render_choice>
                   <response_label ident="',mc_ans_choices_codes_list[i],'">
                     <material>
@@ -194,9 +59,9 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
                   </response_label>
                 </render_choice>
               </response_lid>')
-    }
-    
-    question_xml_chunk = paste(question_xml_chunk,'<item ident="', ident,'" title="Question">
+  }
+  
+  question_xml_chunk = paste(question_xml_chunk,'<item ident="', ident,'" title="Question">
             <itemmetadata>
               <qtimetadata>
                 <qtimetadatafield>
@@ -233,11 +98,18 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
               </respcondition>
             </resprocessing>
           </item>')
-  }
-  else if (question_bank$type_question[i] == 'text_box') {
-    text_box_num = text_box_num + 1    #create unique text box identifier 
-    text = question_bank$question_stem[i]    #get text 
-    question_xml_chunk = paste(question_xml_chunk, '<item ident="', text_box_num,'" title="Question">
+  
+  return(question_xml_chunk)
+}
+
+createTextBoxQuestion <- function(
+    input_question_bank,
+    i,
+    question_xml_chunk,
+    image_string){
+  text_box_num = text_box_num + 1    #create unique text box identifier 
+  text = str_replace_all(input_question_bank$question_stem[i],'\r\n','&lt;/p&gt;')    #get text 
+  question_xml_chunk = paste(question_xml_chunk, '<item ident="', text_box_num,'" title="Question">
         <itemmetadata>
           <qtimetadata>
             <qtimetadatafield>
@@ -264,29 +136,39 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
           </material>
         </presentation>
       </item>')
-  }
-  else if (question_bank$type_question[i] == 'numeric') {    #numeric question types 
-    if (str_detect(question_bank$answer[i], '\\[') == TRUE) {    #range of values 
-      num_ranges = question_bank$answer[i] %>% 
-        str_count(';') + 1    #determine if there are multiple answers
-      answer_string = question_bank$answer[i] %>% 
-        str_remove_all('\\[') %>% 
-        str_remove_all('\\]') %>% 
-        str_replace_all(';', ',')    #reformat answer 
-      answer_list = as.list(str_split(answer_string, ',')[[1]])    #place answer in list 
-      repeat_numeric_code = ''    #blank string to store repeat section 
-      j = 1
-      for (i in 1:num_ranges) {    #repeat for the number of ranges
-        repeat_numeric_code = paste(repeat_numeric_code, '<respcondition continue="No">
+  
+  return(question_xml_chunk)
+}
+
+createNumericQuestion <- function(
+    input_question_bank,
+    i,
+    question_xml_chunk,
+    ident,
+    points,
+    question,
+    image_string){
+  if (str_detect(input_question_bank$answer[i], '\\[') == TRUE) {    #range of values 
+    num_ranges = input_question_bank$answer[i] %>% 
+      str_count(';') + 1    #determine if there are multiple answers
+    answer_string = input_question_bank$answer[i] %>% 
+      str_remove_all('\\[') %>% 
+      str_remove_all('\\]') %>% 
+      str_replace_all(';', ',')    #reformat answer 
+    answer_list = as.list(str_split(answer_string, ',')[[1]])    #place answer in list 
+    repeat_numeric_code = ''    #blank string to store repeat section 
+    j = 1
+    for (i in 1:num_ranges) {    #repeat for the number of ranges
+      repeat_numeric_code = paste(repeat_numeric_code, '<respcondition continue="No">
               <conditionvar>
                 <vargte respident="response1">',answer_list[j + 1],'</vargte>
                 <varlte respident="response1">',answer_list[j],'</varlte>
               </conditionvar>
               <setvar action="Set" varname="SCORE">100</setvar>
             </respcondition>')
-        j = j + 2    #move to next set of answers
-      }
-      question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
+      j = j + 2    #move to next set of answers
+    }
+    question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
         <itemmetadata>
           <qtimetadata>
             <qtimetadatafield>
@@ -323,19 +205,19 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
           </outcomes>',repeat_numeric_code,'
         </resprocessing>
       </item>')
-    }
-    else {    #numeric with exact answer
-      num_ranges = question_bank$answer[i] %>% 
-        str_count(';') + 1    #determine the number of ranges 
-      answer_string = question_bank$answer[i] %>% 
-        str_replace_all(';', ',')    #reformat answer string
-      answer_list = as.list(str_split(answer_string, ',')[[1]])    #turn answer into list 
-      repeat_numeric_code = ''    #create string to store repeat code 
-      # find how this is formated in the spreadsheet: 
-      margin_of_error = 0
-      j = 1
-      for (i in 1:num_ranges) {
-        repeat_numeric_code = paste(repeat_numeric_code, '<respcondition continue="No">
+  }
+  else {    #numeric with exact answer
+    num_ranges = input_question_bank$answer[i] %>% 
+      str_count(';') + 1    #determine the number of ranges 
+    answer_string = input_question_bank$answer[i] %>% 
+      str_replace_all(';', ',')    #reformat answer string
+    answer_list = as.list(str_split(answer_string, ',')[[1]])    #turn answer into list 
+    repeat_numeric_code = ''    #create string to store repeat code 
+    # find how this is formated in the spreadsheet: 
+    margin_of_error = 0
+    j = 1
+    for (i in 1:num_ranges) {
+      repeat_numeric_code = paste(repeat_numeric_code, '<respcondition continue="No">
             <conditionvar>
               <or>
                 <varequal respident="response1">',answer_list[j],'</varequal>
@@ -347,9 +229,9 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
             </conditionvar>
             <setvar action="Set" varname="SCORE">100</setvar>
           </respcondition>')
-        j = j + 1    #move to the next set of answers
-      }
-      question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
+      j = j + 1    #move to the next set of answers
+    }
+    question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
         <itemmetadata>
           <qtimetadata>
             <qtimetadatafield>
@@ -386,10 +268,17 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
           </outcomes>',repeat_numeric_code,'
         </resprocessing>
       </item>')
-    }
   }
-  else if (question_bank$type_question[i] == 'open_ended') {
-    question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
+  
+  return(question_xml_chunk)
+}
+
+createOpenEndedQuestion <- function(
+    question_xml_chunk,
+    ident,
+    points,
+    question){
+  question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
         <itemmetadata>
           <qtimetadata>
             <qtimetadatafield>
@@ -431,69 +320,78 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
           </respcondition>
         </resprocessing>
       </item>')
+  
+  return(question_xml_chunk)
+}
+
+createMatchingQuestion <- function(
+    input_question_bank,
+    i,
+    question_xml_chunk,
+    ident,
+    points,
+    question){
+  question_options = paste('', input_question_bank$question_options[i])    #add space in front for match() purposes
+  ans_choices_list = as.list(str_split(question_options, ';')[[1]])    #put into list
+  
+  if (input_shuffle_answers) {
+    ans_choices_list = sample(ans_choices_list, length(ans_choices_list), replace=FALSE) # shuffle answer choices
   }
-  else if (question_bank$type_question[i] == 'matching') {
-    question_options = paste('', question_bank$question_options[i])    #add space in front for match() purposes
-    ans_choices_list = as.list(str_split(question_options, ';')[[1]])    #put into list
-    
-    if (shuffle_answers) {
-      ans_choices_list = sample(ans_choices_list, length(ans_choices_list), replace=FALSE) # shuffle answer choices
-    }
-    
-    num_of_choices = length(ans_choices_list)    #get the num of answer choices
-    
-    matches = question_bank$answer[i]    #get the match combinations 
-    matches_list = as.list(str_split(matches, ';')[[1]])    #transform into list 
-    num_of_matches = length(matches_list)    #get number of matches the student needs to make 
-    
-    matching_part_1_codes = ''     #create blank string to store codes in 
-    matching_part_1_codes_list = list()    #create blank list to store codes in 
-    for (i in 1:num_of_matches) { 
-      num = toString(i)
-      four_digit_code = paste(num, num, num, num) %>% 
-        str_remove_all(' ')    #create unique code for each match
-      matching_part_1_codes = paste(matching_part_1_codes, four_digit_code, ',')    #make codes string 
-      matching_part_1_codes_list = list.append(matching_part_1_codes_list, four_digit_code)    #make codes list 
-    }
-    
-    matching_ans_choices_codes_list = list()    #create blank list to store codes in 
-    for (i in 1:num_of_choices) {
-      num = toString(i)
-      five_digit_code = paste(num, num, num, num, num) %>% 
-        str_remove_all(' ')    #create unique code for each answer choice 
-      matching_ans_choices_codes_list = list.append(matching_ans_choices_codes_list, five_digit_code)    #make codes list
-    }
-    
-    matching_part_1_list = list()    #create blank list to store first half of match in 
-    matching_part_2_list = list()    #create blank list to store second half of match in 
-    for (i in 1:num_of_matches) {
-      part_1 = gsub('-.*', '', matches_list[i])    #get first half of match 
-      matching_part_1_list = list.append(matching_part_1_list, part_1)    #add to list 
-      part_2 = gsub('.*-', '', matches_list[i])    #get second half od match 
-      matching_part_2_list = list.append(matching_part_2_list, part_2)    #add to list 
-    }
-    
-    inner_repeat_matching_code = ''    #create blank string to store repeated code in 
-    for (i in 1:num_of_choices) { 
-      resp_ident =  matching_ans_choices_codes_list[i]    #get the ident number from list 
-      ans_choice = ans_choices_list[i]    #get answer choice from list 
-      inner_repeat_matching_code = paste(inner_repeat_matching_code, '<response_label ident="',resp_ident,'">
+  
+  num_of_choices = length(ans_choices_list)    #get the num of answer choices
+  
+  matches = input_question_bank$answer[i]    #get the match combinations 
+  matches_list = as.list(str_split(matches, ';')[[1]])    #transform into list 
+  num_of_matches = length(matches_list)    #get number of matches the student needs to make 
+  
+  matching_part_1_codes = ''     #create blank string to store codes in 
+  matching_part_1_codes_list = list()    #create blank list to store codes in 
+  for (i in 1:num_of_matches) { 
+    num = toString(i)
+    four_digit_code = paste(num, num, num, num) %>% 
+      str_remove_all(' ')    #create unique code for each match
+    matching_part_1_codes = paste(matching_part_1_codes, four_digit_code, ',')    #make codes string 
+    matching_part_1_codes_list = list.append(matching_part_1_codes_list, four_digit_code)    #make codes list 
+  }
+  
+  matching_ans_choices_codes_list = list()    #create blank list to store codes in 
+  for (i in 1:num_of_choices) {
+    num = toString(i)
+    five_digit_code = paste(num, num, num, num, num) %>% 
+      str_remove_all(' ')    #create unique code for each answer choice 
+    matching_ans_choices_codes_list = list.append(matching_ans_choices_codes_list, five_digit_code)    #make codes list
+  }
+  
+  matching_part_1_list = list()    #create blank list to store first half of match in 
+  matching_part_2_list = list()    #create blank list to store second half of match in 
+  for (i in 1:num_of_matches) {
+    part_1 = gsub('-.*', '', matches_list[i])    #get first half of match 
+    matching_part_1_list = list.append(matching_part_1_list, part_1)    #add to list 
+    part_2 = gsub('.*-', '', matches_list[i])    #get second half od match 
+    matching_part_2_list = list.append(matching_part_2_list, part_2)    #add to list 
+  }
+  
+  inner_repeat_matching_code = ''    #create blank string to store repeated code in 
+  for (i in 1:num_of_choices) { 
+    resp_ident =  matching_ans_choices_codes_list[i]    #get the ident number from list 
+    ans_choice = ans_choices_list[i]    #get answer choice from list 
+    inner_repeat_matching_code = paste(inner_repeat_matching_code, '<response_label ident="',resp_ident,'">
                 <material>
                   <mattext>',ans_choice,'</mattext>
                 </material>
               </response_label>')    #add to string 
-    }
-    
-    resp_val_list = list()    #create blank list to stroe response_ident in
-    for (i in 1:num_of_matches) {
-      resp_val = paste('response_', matching_part_1_codes_list[i]) %>% 
-        str_remove_all(' ')    #create response_ident 
-      resp_val_list = list.append(resp_val_list, resp_val)    #add to list 
-    }
-    
-    repeat_options_matching_code = ''    #create blank string to store repeating section in 
-    for (i in 1:num_of_matches) {
-      repeat_options_matching_code = paste(repeat_options_matching_code, '<response_lid ident="',resp_val_list[i],'">
+  }
+  
+  resp_val_list = list()    #create blank list to stroe response_ident in
+  for (i in 1:num_of_matches) {
+    resp_val = paste('response_', matching_part_1_codes_list[i]) %>% 
+      str_remove_all(' ')    #create response_ident 
+    resp_val_list = list.append(resp_val_list, resp_val)    #add to list 
+  }
+  
+  repeat_options_matching_code = ''    #create blank string to store repeating section in 
+  for (i in 1:num_of_matches) {
+    repeat_options_matching_code = paste(repeat_options_matching_code, '<response_lid ident="',resp_val_list[i],'">
             <material>
               <mattext texttype="text/plain">',matching_part_1_list[i],'</mattext>
             </material>
@@ -501,22 +399,22 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
             ',inner_repeat_matching_code,'
             </render_choice>
           </response_lid>')    #create the repeating chunk of code 
-    }
-    
-    repeat_correct_matches_code = ''    #create blank string to store repeating section in 
-    for (i in 1:num_of_matches) {
-      code_index = match(tolower(matching_part_2_list[i]), tolower(ans_choices_list))
-      part_2_code = matching_ans_choices_codes_list[code_index]    #get the ident of the match answer
-      repeat_correct_matches_code = paste(repeat_correct_matches_code, '<respcondition>
+  }
+  
+  repeat_correct_matches_code = ''    #create blank string to store repeating section in 
+  for (i in 1:num_of_matches) {
+    code_index = match(tolower(matching_part_2_list[i]), tolower(ans_choices_list))
+    part_2_code = matching_ans_choices_codes_list[code_index]    #get the ident of the match answer
+    repeat_correct_matches_code = paste(repeat_correct_matches_code, '<respcondition>
             <conditionvar>
               <varequal respident="',resp_val_list[i],'">',part_2_code,'</varequal>
             </conditionvar>
             <setvar varname="SCORE" action="Add">25.00</setvar>
           </respcondition>')
-    }
-    
-    #concatenate all the pieces of code together 
-    question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
+  }
+  
+  #concatenate all the pieces of code together 
+  question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
         <itemmetadata>
           <qtimetadata>
             <qtimetadatafield>
@@ -550,9 +448,16 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
           ',repeat_correct_matches_code,'
         </resprocessing>
       </item>')
-  }
-  else if (question_bank$type_question[i] == 'file_upload') {
-    question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
+  
+  return(question_xml_chunk)
+}
+
+createFileUploadQuestion <- function(
+    question_xml_chunk,
+    ident,
+    points,
+    question){
+  question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
         <itemmetadata>
           <qtimetadata>
             <qtimetadatafield>
@@ -584,71 +489,80 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
           </outcomes>
         </resprocessing>
       </item>')
+  
+  return(question_xml_chunk)
+}
+
+createSelectAllQuestion <- function(
+    input_question_bank,
+    i,
+    input_shuffle_answers,
+    ident,
+    points,
+    question){
+  select_all_ans_options = input_question_bank$question_options[i]
+  ans_choices_list = as.list(str_split(select_all_ans_options, ';')[[1]])    #put into list
+  
+  if (input_shuffle_answers) {
+    ans_choices_list = sample(ans_choices_list, length(ans_choices_list), replace=FALSE) # shuffle answer choices
   }
-  else if (question_bank$type_question[i] == 'select_all') {
-    select_all_ans_options = question_bank$question_options[i]
-    ans_choices_list = as.list(str_split(select_all_ans_options, ';')[[1]])    #put into list
-    
-    if (shuffle_answers) {
-      ans_choices_list = sample(ans_choices_list, length(ans_choices_list), replace=FALSE) # shuffle answer choices
-    }
-    
-    num_ans_choices = length(ans_choices_list)    #get number of answer choices
-    
-    answers = question_bank$answer[i]
-    answers_list = as.list(str_split(answers, ';')[[1]])
-    num_corr_answers = length(answers_list)
-    
-    corr_ans_index_list = list()
-    for (i in 1:num_corr_answers) {
-      corr_answer = answers_list[i]
-      corr_ans_index = match(tolower(corr_answer), tolower(ans_choices_list))
-      corr_ans_index_list = list.append(corr_ans_index_list, corr_ans_index)
-    }
-    
-    select_all_ans_choices_codes = ''   #create string to store codes 
-    select_all_ans_choices_codes_list = list()   #create empty list to store codes 
-    for (i in 1:num_ans_choices){ 
-      num = toString(i)
-      four_digit_code = paste(num, num, num, num) %>% 
-        str_remove_all(' ')    #create unique code for each answer choice
-      select_all_ans_choices_codes = paste(select_all_ans_choices_codes, four_digit_code, ',')    #make codes string 
-      select_all_ans_choices_codes_list = list.append(select_all_ans_choices_codes_list, four_digit_code)    #make codes list 
-    }
-    select_all_ans_choices_codes = str_remove_all(select_all_ans_choices_codes, ' ')    #remove spaces from string 
-    
-    corr_ans_codes_list = list()
-    for (i in 1:num_corr_answers) {
-      index = as.numeric(corr_ans_index_list[i])
-      code = as.numeric(select_all_ans_choices_codes_list[index])
-      corr_ans_codes_list = list.append(corr_ans_codes_list, code)
-    }
-    
-    select_all_repeat_code = ''
-    for (i in 1:num_ans_choices) { 
-      ans_choice_code = toString(select_all_ans_choices_codes_list[i])
-      ans_choice = toString(ans_choices_list[i])
-      select_all_repeat_code = paste(select_all_repeat_code, '<response_label ident="',ans_choice_code,'">
+  
+  num_ans_choices = length(ans_choices_list)    #get number of answer choices
+  
+  answers = input_question_bank$answer[i]
+  answers_list = as.list(str_split(answers, ';')[[1]])
+  num_corr_answers = length(answers_list)
+  
+  corr_ans_index_list = list()
+  for (i in 1:num_corr_answers) {
+    corr_answer = answers_list[i]
+    corr_ans_index = match(tolower(corr_answer), tolower(ans_choices_list))
+    corr_ans_index_list = list.append(corr_ans_index_list, corr_ans_index)
+  }
+  
+  select_all_ans_choices_codes = ''   #create string to store codes 
+  select_all_ans_choices_codes_list = list()   #create empty list to store codes 
+  for (i in 1:num_ans_choices){ 
+    num = toString(i)
+    four_digit_code = paste(num, num, num, num) %>% 
+      str_remove_all(' ')    #create unique code for each answer choice
+    select_all_ans_choices_codes = paste(select_all_ans_choices_codes, four_digit_code, ',')    #make codes string 
+    select_all_ans_choices_codes_list = list.append(select_all_ans_choices_codes_list, four_digit_code)    #make codes list 
+  }
+  select_all_ans_choices_codes = str_remove_all(select_all_ans_choices_codes, ' ')    #remove spaces from string 
+  
+  corr_ans_codes_list = list()
+  for (i in 1:num_corr_answers) {
+    index = as.numeric(corr_ans_index_list[i])
+    code = as.numeric(select_all_ans_choices_codes_list[index])
+    corr_ans_codes_list = list.append(corr_ans_codes_list, code)
+  }
+  
+  select_all_repeat_code = ''
+  for (i in 1:num_ans_choices) { 
+    ans_choice_code = toString(select_all_ans_choices_codes_list[i])
+    ans_choice = toString(ans_choices_list[i])
+    select_all_repeat_code = paste(select_all_repeat_code, '<response_label ident="',ans_choice_code,'">
                 <material>
                   <mattext texttype="text/plain">',ans_choice,'</mattext>
                 </material>
               </response_label>')
+  }
+  
+  #if code in correct list matches code in code list it is a yes, if not it is a no 
+  correct_ans_chunk = ''
+  for (i in 1: num_ans_choices) {
+    ans_code = toString(select_all_ans_choices_codes_list[i])
+    if (is.element(select_all_ans_choices_codes_list[i], corr_ans_codes_list)) {
+      correct_ans_chunk = paste(correct_ans_chunk, '<varequal respident="response1">',ans_code,'</varequal>')
     }
-    
-    #if code in correct list matches code in code list it is a yes, if not it is a no 
-    correct_ans_chunk = ''
-    for (i in 1: num_ans_choices) {
-      ans_code = toString(select_all_ans_choices_codes_list[i])
-      if (is.element(select_all_ans_choices_codes_list[i], corr_ans_codes_list)) {
-        correct_ans_chunk = paste(correct_ans_chunk, '<varequal respident="response1">',ans_code,'</varequal>')
-      }
-      else {
-        correct_ans_chunk = paste(correct_ans_chunk, '<not>
+    else {
+      correct_ans_chunk = paste(correct_ans_chunk, '<not>
                   <varequal respident="response1">',ans_code,'</varequal>
                 </not>')
-      }
     }
-    question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
+  }
+  question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
         <itemmetadata>
           <qtimetadata>
             <qtimetadatafield>
@@ -693,34 +607,42 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
           </respcondition>
         </resprocessing>
       </item>')
+  
+  return(question_xml_chunk)
+}
+
+createFillInTheBlankQuestion <- function(
+    input_question_bank,
+    i,
+    ident,
+    points,
+    question){
+  correct_answers = input_question_bank$answer[i]    #get correct answers 
+  correct_ans_list = as.list(str_split(correct_answers, ';')[[1]])    #put into list 
+  num_corr_ans = length(correct_ans_list)
+  
+  #create code for each correct answer
+  fill_in_blank_ans_codes = ''    #create blank string to concatenate to 
+  fill_in_blank_ans_codes_list = list()    #create empty list to append to 
+  for (i in 1:num_corr_ans) {
+    num = toString(i)
+    four_digit_code = paste(num, num, num, num) %>% 
+      str_remove_all(' ')    #create unique code for each answer choice
+    fill_in_blank_ans_codes = paste(fill_in_blank_ans_codes, four_digit_code, ',')    #make codes string 
+    fill_in_blank_ans_codes_list = list.append(fill_in_blank_ans_codes_list, four_digit_code)    #make codes list 
   }
-  else if (question_bank$type_question[i] == 'fill_in_the_blank') {
-    correct_answers = question_bank$answer[i]    #get correct answers 
-    correct_ans_list = as.list(str_split(correct_answers, ';')[[1]])    #put into list 
-    num_corr_ans = length(correct_ans_list)
-    
-    #create code for each correct answer
-    fill_in_blank_ans_codes = ''    #create blank string to concatenate to 
-    fill_in_blank_ans_codes_list = list()    #create empty list to append to 
-    for (i in 1:num_corr_ans) {
-      num = toString(i)
-      four_digit_code = paste(num, num, num, num) %>% 
-        str_remove_all(' ')    #create unique code for each answer choice
-      fill_in_blank_ans_codes = paste(fill_in_blank_ans_codes, four_digit_code, ',')    #make codes string 
-      fill_in_blank_ans_codes_list = list.append(fill_in_blank_ans_codes_list, four_digit_code)    #make codes list 
-    }
-    fill_in_blank_ans_codes = str_remove_all(fill_in_blank_ans_codes, ' ')    #remove excess spaces
-    
-    #create code that indicates correct answers 
-    acceptable_answers_code = ''
-    for (i in 1:num_corr_ans) {
-      answer = correct_ans_list[i]
-      acceptable_answers_code = paste(acceptable_answers_code, 
-      '<varequal respident="response1">',answer,'</varequal>') 
-    }
-    
-    #add to xml string
-    question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
+  fill_in_blank_ans_codes = str_remove_all(fill_in_blank_ans_codes, ' ')    #remove excess spaces
+  
+  #create code that indicates correct answers 
+  acceptable_answers_code = ''
+  for (i in 1:num_corr_ans) {
+    answer = correct_ans_list[i]
+    acceptable_answers_code = paste(acceptable_answers_code, 
+                                    '<varequal respident="response1">',answer,'</varequal>') 
+  }
+  
+  #add to xml string
+  question_xml_chunk = paste(question_xml_chunk, '<item ident="',ident,'" title="Question">
         <itemmetadata>
           <qtimetadata>
             <qtimetadatafield>
@@ -763,39 +685,49 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
           </respcondition>
         </resprocessing>
       </item>')
+  
+  return(question_xml_chunk)
+}
+
+createTrueFalseQuestion <- function(
+    input_question_bank,
+    i,
+    input_shuffle_answers,
+    ident,
+    points,
+    question,
+    image_string){
+  question_options = input_question_bank$question_options[i]
+  ans_choices_list = as.list(str_split(question_options, ';')[[1]]) # put into list
+  
+  if (input_shuffle_answers) {
+    ans_choices_list = sample(ans_choices_list, length(ans_choices_list), replace=FALSE) # shuffle answer choices
   }
-  else if (question_bank$type_question[i] == 'true_false') {  # if true/false -> similar to multiple choice but only has two options
-    question_options = question_bank$question_options[i]
-    ans_choices_list = as.list(str_split(question_options, ';')[[1]]) # put into list
-   
-    if (shuffle_answers) {
-      ans_choices_list = sample(ans_choices_list, length(ans_choices_list), replace=FALSE) # shuffle answer choices
-    }
-    
-    num_ans_choices = length(ans_choices_list)    #get number of answer choices
-    corr_ans = question_bank$answer[i]    #get the correct answer 
-    corr_ans_index = match(tolower(corr_ans), tolower(ans_choices_list))
-    corr_ans_resp = paste('response', corr_ans_index[1]) %>% 
-      str_remove_all(' ')    #determine what answer choice option is correct 
-    corr_ans_resp_code = paste(corr_ans_index, corr_ans_index, corr_ans_index, corr_ans_index) %>% 
-      str_remove_all(' ')    #create code to correspond with correct answer choice
-    
-    ans_choices_codes = ''   #create string to store codes 
-    ans_choices_codes_list = list()   #create empty list to store codes 
-    for (i in 1:num_ans_choices){
-      num = toString(i)
-      four_digit_code = paste(num, num, num, num) %>% 
-        str_remove_all(' ')    #create unique code for each answer choice
-      ans_choices_codes = paste(ans_choices_codes, four_digit_code, ',')    #make codes string 
-      ans_choices_codes_list = list.append(ans_choices_codes_list, four_digit_code)    #make codes list 
-    }
-    ans_choices_codes = str_remove_all(ans_choices_codes, ' ')    #remove spaces from string 
-    
-    repeat_code = ''   #create string to store the answer choices xml code 
-    for (i in 1:num_ans_choices) {
-      resp_val = paste('response', i) %>% 
-        str_remove_all(' ')    #create response number 
-      repeat_code = paste(repeat_code, '<response_lid ident="',resp_val, '" rcardinality="Single">
+  
+  num_ans_choices = length(ans_choices_list)    #get number of answer choices
+  corr_ans = input_question_bank$answer[i]    #get the correct answer 
+  corr_ans_index = match(tolower(corr_ans), tolower(ans_choices_list))
+  corr_ans_resp = paste('response', corr_ans_index[1]) %>% 
+    str_remove_all(' ')    #determine what answer choice option is correct 
+  corr_ans_resp_code = paste(corr_ans_index, corr_ans_index, corr_ans_index, corr_ans_index) %>% 
+    str_remove_all(' ')    #create code to correspond with correct answer choice
+  
+  ans_choices_codes = ''   #create string to store codes 
+  ans_choices_codes_list = list()   #create empty list to store codes 
+  for (i in 1:num_ans_choices){
+    num = toString(i)
+    four_digit_code = paste(num, num, num, num) %>% 
+      str_remove_all(' ')    #create unique code for each answer choice
+    ans_choices_codes = paste(ans_choices_codes, four_digit_code, ',')    #make codes string 
+    ans_choices_codes_list = list.append(ans_choices_codes_list, four_digit_code)    #make codes list 
+  }
+  ans_choices_codes = str_remove_all(ans_choices_codes, ' ')    #remove spaces from string 
+  
+  repeat_code = ''   #create string to store the answer choices xml code 
+  for (i in 1:num_ans_choices) {
+    resp_val = paste('response', i) %>% 
+      str_remove_all(' ')    #create response number 
+    repeat_code = paste(repeat_code, '<response_lid ident="',resp_val, '" rcardinality="Single">
                 <render_choice>
                   <response_label ident="',ans_choices_codes_list[i],'">
                     <material>
@@ -804,9 +736,9 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
                   </response_label>
                 </render_choice>
               </response_lid>')
-    }
-    
-    question_xml_chunk = paste(question_xml_chunk,'<item ident="', ident,'" title="Question">
+  }
+  
+  question_xml_chunk = paste(question_xml_chunk,'<item ident="', ident,'" title="Question">
             <itemmetadata>
               <qtimetadata>
                 <qtimetadatafield>
@@ -843,23 +775,241 @@ for (i in 1:nrow(question_bank)) {    #iterate through each row of the file
               </respcondition>
             </resprocessing>
           </item>')
-  }
+  
+  return(question_xml_chunk)
 }
 
-#questions stop 
-
-#ending part of xml code after questions 
-ending_xml_chunk = '    </section>
+createCanvasQuiz <- function(
+    input_question_bank,  
+    input_title,
+    input_time_limit,
+    input_max_attempts,
+    input_shuffle_answers,
+    input_text_size,
+    input_font){
+  #USER INPUT - minutes code currently is not functional
+  #if no images input 'no_images'
+  #image_name_list = list('mySquirrelImage.jpg')    #list the images to use in the quiz
+  #location_num_list = list('item_1', 'item_4')    #list the location of each image 
+  
+  #num_of_images = length(image_name_list)    #get the num of images in the file 
+  
+  #user input ends 
+  
+  #beginning part of xml file, before questions 
+  beginning_xml_chunk = paste('<?xml version="1.0" encoding="UTF-8"?>
+<questestinterop xmlns="http://www.imsglobal.org/xsd/ims_qtiasiv1p2" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation=
+"http://www.imsglobal.org/xsd/ims_qtiasiv1p2 http://www.imsglobal.org/xsd/ims_qtiasiv1p2p1.xsd">
+  <assessment ident="gacc8cbc8c785376e85ccd059145646cb" title="', input_title,'">
+    <qtimetadata>
+      <qtimetadatafield>
+        <fieldlabel>qmd_timelimit</fieldlabel>
+        <fieldentry>', input_time_limit, '</fieldentry>
+      </qtimetadatafield>
+      <qtimetadatafield>
+        <fieldlabel>cc_maxattempts</fieldlabel>
+        <fieldentry>', input_max_attempts, '</fieldentry>
+      </qtimetadatafield>
+    </qtimetadata>
+    <section ident="root_section">')
+  
+  #questions start 
+  
+  question_xml_chunk = ''    #create string of questions in xml
+  text_box_num = 0    # declare and initiate variable 
+  for (i in 1:nrow(input_question_bank)) {    #iterate through each row of the file 
+    
+    ident = input_question_bank$question_identifier[i]    #get question identifier
+    points = input_question_bank$points[i]    #get question point value 
+    question = str_replace_all(input_question_bank$question_stem[i],'\r\n','&lt;/p&gt;')    #get question
+    
+    italics = str_count(question, "\\*") # determine whether there are italics in question
+    if (italics > 0) {
+      words = strsplit(question, " ")[[1]]
+      italicized_question = ""
+      for (word in words) { # iterate through every word in the question
+        italic = str_count(word, "\\*") # determine whether the word is italicized
+        if (italic > 0) { # format for italicized text
+          italicized_question = paste(italicized_question, "<em>")
+          
+          question_mark = str_count(word, "\\?")
+          if (question_mark > 0) { # removes question mark so it is not italicized, adds it in at the end
+            word_without_question_mark = gsub("\\?", "", word)
+            italicized_question = paste(italicized_question, str_replace_all(word_without_question_mark, "([\\*])", ""), sep="")
+            italicized_question = paste(italicized_question, "</em>", sep="")
+            italicized_question = paste(italicized_question, "?", sep="")
+          } else {
+            italicized_question = paste(italicized_question, str_replace_all(word, "([\\*])", ""), sep="")
+            italicized_question = paste(italicized_question, "</em>", sep="")
+          }
+          
+        } else {
+          italicized_question = paste(italicized_question, word)
+        }
+      }
+      question = italicized_question
+    }
+    
+    underlines = str_count(question, "_") # determine whether there are underlined words in question
+    if (underlines > 0) {
+      words = strsplit(question, " ")[[1]]
+      underlined_question = ""
+      for (word in words) { # iterate through every word in the question
+        underline = str_count(word, "_") # determine whether the word is underlined
+        if (underline > 0) { # format for underlined text
+          underlined_question = paste(underlined_question, "<span style=\"text-decoration: underline;\">")
+          
+          question_mark = str_count(word, "\\?")
+          if (question_mark > 0) { # removes question mark so it is not underlined, adds it in at the end
+            word_without_question_mark = gsub("\\?", "", word)
+            underlined_question = paste(underlined_question, str_replace_all(word_without_question_mark, "([_])", ""), sep="")
+            underlined_question = paste(underlined_question, "</span>", sep="")
+            underlined_question = paste(underlined_question, "?", sep="")
+          } else {
+            underlined_question = paste(underlined_question, str_replace_all(word, "([_])", ""), sep="")
+            underlined_question = paste(underlined_question, "</span>", sep="")
+          }
+          
+        } else {
+          underlined_question = paste(underlined_question, word)
+        }
+      }
+      question = underlined_question
+    }
+    
+    bolds = str_count(question, "\\*\\*") # determine whether there are bold words in question
+    if (bolds > 0) {
+      words = strsplit(question, " ")[[1]]
+      bolded_question = ""
+      for (word in words) { # iterate through every word in the question
+        vold = str_count(word, "\\*\\*") # determine whether the word is bolded
+        if (bold > 0) { # format for underlined text
+          bolded_question = paste(bolded_question, "<strong>")
+          
+          question_mark = str_count(word, "\\?")
+          if (question_mark > 0) { # removes question mark so it is not bolded, adds it in at the end
+            word_without_question_mark = gsub("\\?", "", word)
+            bolded_question = paste(bolded_question, str_replace_all(word_without_question_mark, "([\\*\\*])", ""), sep="")
+            bolded_question = paste(bolded_question, "</strong>", sep="")
+            bolded_question = paste(bolded_question, "?", sep="")
+          } else {
+            bolded_question = paste(bolded_question, str_replace_all(word, "([\\*\\*])", ""), sep="")
+            bolded_question = paste(bolded_question, "</strong>", sep="")
+          }
+          
+        } else {
+          bolded_question = paste(bolded_question, word)
+        }
+      }
+      question = bolded_question
+    }
+    
+    # create the beginning tag for the font
+    font_details = ""
+    font_details = paste("<", input_font, sep = "")
+    font_details = paste(font_details, ">", sep = "")
+    
+    # concat beginning font tag with beginning div tag
+    question_details = "<div>"
+    question_details = paste(question_details, font_details, sep = "")
+    
+    # create the beginning tag for the text size
+    text_size_details = "<span style=\"font-size: "
+    text_size_details = paste(text_size_details, input_text_size, sep = "")
+    text_size_details = paste(text_size_details, ";\">", sep = "")
+    
+    # concat beginning text size tag with other tags and question
+    question_details = paste(question_details, text_size_details, sep = "")
+    question_details = paste(question_details, question, sep = "")
+    
+    # concat tags and question with close tag for text size
+    question_details = paste(question_details, "</span>", sep = "")
+    
+    # create close tag for the font
+    font_details = ""
+    font_details = paste("</", input_font, sep = "")
+    font_details = paste(font_details, ">", sep = "")
+    
+    # concat font close tag with other tags and question 
+    question_details = paste(question_details, font_details, sep = "")
+    
+    # concat other tags and question with close div tag
+    question_details = paste(question_details, "</div>", sep = "")
+    
+    # set question to the full string with all tags and questions
+    question = question_details
+    
+    image_string = ''    #create blank string for default image name/no image 
+    #if (str_detect(location_num_list[1], toString(i)))    #if this question has an image 
+    #{
+    #image_name = image_name_list[1]    #get image name 
+    #image_string = paste('&amp;nbsp;&lt;/p&gt;&lt;p&gt;&lt;img src="$IMS-CC-FILEBASE$/Uploaded%20Media/',image_name,'" alt="',image_name,'"&gt;&amp;nbsp;')
+    #image_name_list = image_name_list[-1]     #remove image name from list 
+    #location_num_list = location_num_list[-1]    #remove item num from list 
+    #}
+    
+    if (input_question_bank$type_question[i] == 'multiple_choice') {    #if multiple choice
+      question_xml_chunk = createMultipleChoiceQuestion(input_question_bank, i, input_shuffle_answers, question_xml_chunk, ident, points, question, image_string)
+    }
+    else if (input_question_bank$type_question[i] == 'text_box') {
+      question_xml_chunk = createTextBoxQuestion(input_question_bank, i, question_xml_chunk, image_string)
+    }
+    else if (input_question_bank$type_question[i] == 'numeric') {    #numeric question types 
+      question_xml_chunk = createNumericQuestion(input_question_bank, i, question_xml_chunk, ident, points, question, image_string)
+    }
+    else if (input_question_bank$type_question[i] == 'open_ended') {
+      question_xml_chunk = createOpenEndedQuestion(question_xml_chunk, ident, points, question)
+    }
+    else if (input_question_bank$type_question[i] == 'matching') {
+      question_xml_chunk = createMatchingQuestion(input_question_bank, i, question_xml_chunk, ident, points, question)
+    }
+    else if (input_question_bank$type_question[i] == 'file_upload') {
+      question_xml_chunk = createFileUploadQuestion(question_xml_chunk, ident, points, question)
+    }
+    else if (input_question_bank$type_question[i] == 'select_all') {
+      question_xml_chunk = createSelectAllQuestion(input_question_bank, i, input_shuffle_answers, ident, points, question)
+    }
+    else if (input_question_bank$type_question[i] == 'fill_in_the_blank') {
+      question_xml_chunk = createFillInTheBlankQuestion(input_question_bank, i, ident, points, question)
+    }
+    else if (input_question_bank$type_question[i] == 'true_false') {  # if true/false -> similar to multiple choice but only has two options
+      question_xml_chunk = createTrueFalseQuestion(input_question_bank, i, input_shuffle_answers, ident, points, question, image_string)
+    }
+  }
+  
+  #questions stop 
+  
+  #ending part of xml code after questions 
+  ending_xml_chunk = '    </section>
   </assessment>
 </questestinterop>
 '
+  
+  #complete xml code 
+  xml_chunk = paste(beginning_xml_chunk, question_xml_chunk, ending_xml_chunk)
+  
+  #write xml file 
+  #USER INPUT
+  
+  write(xml_chunk, file = paste0(input_title,'_xml_quiz.xml'))
+  zip( paste0('zipped_quiz ',input_title,'.zip'), paste0(input_title,'_xml_quiz.xml'))
+  
+  cat(paste0(input_title,' success!'))
+}
 
-#complete xml code 
-xml_chunk = paste(beginning_xml_chunk, question_xml_chunk, ending_xml_chunk)
+input_question_bank = read_xlsx('template_of_question_types.xlsx')
+input_title = 'Template of Question Types Quiz'
+input_time_limit = 'unlimited'
+input_max_attempts = 'unlimited'
+input_shuffle_answers = TRUE
+input_text_size = "12pt"
+input_font = "p"
 
-#write xml file 
-#USER INPUT
-setwd("/cloud/project/Module Quizzes/template_of_question_types")   #where you are writing the file to
-write(xml_chunk, file = 'template_of_question_types_quiz.xml')
-zip('myZippedQuiz.zip', 'template_of_question_types_quiz.xml')
-setwd("/cloud/project/Module Quizzes")
+createCanvasQuiz(input_question_bank,  
+                 input_title,
+                 input_time_limit,
+                 input_max_attempts,
+                 input_shuffle_answers,
+                 input_text_size,
+                 input_font)
